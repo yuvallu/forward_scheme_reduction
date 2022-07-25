@@ -1,0 +1,172 @@
+City,Province,Country,River,Lake,Sea
+Shkoder,Albania,AL,,Lake Skutari,
+Durres,Albania,AL,,,Mediterranean Sea
+Vlore,Albania,AL,,,Mediterranean Sea
+Kavalla,Anatoliki Makedhonia kai Thraki,GR,,,Mediterranean Sea
+Athens,Attiki,GR,,,Mediterranean Sea
+Piraeus,Attiki,GR,,,Mediterranean Sea
+Patrai,Dhytiki Ellas,GR,,,Mediterranean Sea
+Korfu,Ionioi Nisoi,GR,,,Mediterranean Sea
+Thessaloniki,Kedriki Makedhonia,GR,,,Mediterranean Sea
+Iraklion,Kriti,GR,,,Mediterranean Sea
+Ermoupoli,Notion Aiyaion,GR,,,Mediterranean Sea
+Volos,Thessalia,GR,,,Mediterranean Sea
+Mytilini,Voreion Aiyaion,GR,,,Mediterranean Sea
+Belgrade,Serbia,SRB,Donau,,
+Belgrade,Serbia,SRB,Save,,
+Strasbourg,Alsace,F,Rhein,,
+Bordeaux,Aquitaine,F,Garonne,,
+Brest,Bretagne,F,,,Atlantic Ocean
+Orleans,Centre,F,Loire,,
+Tours,Centre,F,Loire,,
+Chalons en Champagne,Champagne Ardenne,F,Marne,,
+Ajaccio,Corse,F,,,Mediterranean Sea
+Besancon,Franche Comte,F,Doubs,,
+Rouen,Haute Normandie,F,Seine,,
+Le Havre,Haute Normandie,F,Seine,,The Channel
+Paris,Ile de France,F,Seine,,
+Boulogne Billancourt,Ile de France,F,Seine,,
+Perpignan,Languedoc Roussillon,F,,,Mediterranean Sea
+Metz,Lorraine,F,Mosel,,
+Nancy,Lorraine,F,Mosel,,
+Toulouse,Midi Pyrenees,F,Garonne,,
+Nantes,Pays de la Loire,F,Loire,,
+Marseille,Provence Cote dAzur,F,,,Mediterranean Sea
+Nice,Provence Cote dAzur,F,,,Mediterranean Sea
+Toulon,Provence Cote dAzur,F,,,Mediterranean Sea
+Lyon,Rhone Alpes,F,Saone,,
+Lyon,Rhone Alpes,F,Saone,,
+Grenoble,Rhone Alpes,F,Isere,,
+Villeurbanne,Rhone Alpes,F,Rhone,,
+Sevilla,Andalusia,E,Guadalquivir,,
+Almeria,Andalusia,E,,,Mediterranean Sea
+Cadiz,Andalusia,E,,,Atlantic Ocean
+Cordoba,Andalusia,E,Guadalquivir,,
+Huelva,Andalusia,E,,,Atlantic Ocean
+Malaga,Andalusia,E,,,Mediterranean Sea
+Algeciras,Andalusia,E,,,Mediterranean Sea
+Zaragoza,Aragon,E,Ebro,,
+Gijon,Asturias,E,,,Atlantic Ocean
+Palma de Mallorca,Balearic Islands,E,,,Mediterranean Sea
+Bilbao,Basque Country,E,,,Atlantic Ocean
+Baracaldo,Basque Country,E,,,Atlantic Ocean
+Donostia,Basque Country,E,,,Atlantic Ocean
+Santa Cruz de Tenerife,Canary Islands,E,,,Atlantic Ocean
+Las Palmas de Gran Canaria,Canary Islands,E,,,Atlantic Ocean
+La Laguna,Canary Islands,E,,,Atlantic Ocean
+Santander,Cantabria,E,,,Atlantic Ocean
+Valladolid,Castile and Leon,E,Douro,,
+Barcelona,Catalonia,E,,,Mediterranean Sea
+Badalona,Catalonia,E,,,Mediterranean Sea
+Badajoz,Estremadura,E,Guadiana,,
+La Coruna,Galicia,E,,,Atlantic Ocean
+Vigo,Galicia,E,,,Atlantic Ocean
+Cartagena,Murcia,E,,,Mediterranean Sea
+Logrono,Rioja,E,Ebro,,
+Valencia,Valencia,E,,,Mediterranean Sea
+Alicante,Valencia,E,,,Mediterranean Sea
+Castellon de la Plana,Valencia,E,,,Mediterranean Sea
+Bregenz,Vorarlberg,A,,Bodensee,
+Vienna,Vienna,A,Donau,,
+Linz,Upper Austria,A,Donau,,
+Innsbruck,Tyrol,A,Inn,,
+Graz,Styria,A,Mur,,
+Salzburg,Salzburg,A,Salzach,,
+Ostrava,Severomoravsky,CZ,Oder,,
+Olomouc,Severomoravsky,CZ,March,,
+Stuttgart,Baden Wurttemberg,D,Neckar,,
+Mannheim,Baden Wurttemberg,D,Rhein,,
+Mannheim,Baden Wurttemberg,D,Neckar,,
+Karlsruhe,Baden Wurttemberg,D,Rhein,,
+Heidelberg,Baden Wurttemberg,D,Neckar,,
+Heilbronn,Baden Wurttemberg,D,Neckar,,
+Ulm,Baden Wurttemberg,D,Donau,,
+Ulm,Baden Wurttemberg,D,Iller,,
+Munich,Bayern,D,Isar,,
+Augsburg,Bayern,D,Lech,,
+Wurzburg,Bayern,D,Main,,
+Regensburg,Bayern,D,Donau,,
+Ingolstadt,Bayern,D,Donau,,
+Bremen,Bremen,D,Weser,,
+Bremerhaven,Bremen,D,Weser,,North Sea
+Hamburg,Hamburg,D,Elbe,,
+Wiesbaden,Hessen,D,Rhein,,
+Wiesbaden,Hessen,D,Main,,
+Frankfurt am Main,Hessen,D,Main,,
+Kassel,Hessen,D,Fulda,,
+Offenbach am Main,Hessen,D,Main,,
+Rostock,Mecklenburg Vorpommern,D,,,Baltic Sea
+Hannover,Niedersachsen,D,Leine,,
+Gottingen,Niedersachsen,D,Leine,,
+Wolfsburg,Niedersachsen,D,Aller,,
+Dusseldorf,Nordrhein Westfalen,D,Rhein,,
+Koln,Nordrhein Westfalen,D,Rhein,,
+Duisburg,Nordrhein Westfalen,D,Rhein,,
+Bonn,Nordrhein Westfalen,D,Rhein,,
+Krefeld,Nordrhein Westfalen,D,Rhein,,
+Leverkusen,Nordrhein Westfalen,D,Rhein,,
+Neuss,Nordrhein Westfalen,D,Rhein,,
+Mainz,Rheinland Pfalz,D,Rhein,,
+Ludwigshafen,Rheinland Pfalz,D,Rhein,,
+Koblenz,Rheinland Pfalz,D,Rhein,,
+Koblenz,Rheinland Pfalz,D,Mosel,,
+Saarbrucken,Saarland,D,Saar,,
+Dresden,Sachsen,D,Elbe,,
+Magdeburg,Sachsen Anhalt,D,Elbe,,
+Kiel,Schleswig Holstein,D,,,Baltic Sea
+Lubeck,Schleswig Holstein,D,,,Baltic Sea
+Szolnok,Szolnok,H,Theiss,,
+Budapest,Budapest (munic.),H,Donau,,
+Gyor,Gyor (munic.),H,Raab,,
+Szeged,Szeged (munic.),H,Theiss,,
+Turin,Piemonte,I,Po,,
+Bolzano,Trentino Alto Adige,I,Etsch,,
+Trento,Trentino Alto Adige,I,Etsch,,
+Verona,Veneto,I,Etsch,,
+Venice,Veneto,I,,,Mediterranean Sea
+Trieste,Friuli Venezia Giulia,I,,,Mediterranean Sea
+La Spezia,Liguria,I,,,Mediterranean Sea
+Genua,Liguria,I,,,Mediterranean Sea
+Piacenza,Emilia Romagna,I,Po,,
+Rimini,Emilia Romagna,I,,,Mediterranean Sea
+Livorno,Toscana,I,,,Mediterranean Sea
+Pisa,Toscana,I,Arno,,
+Firenze,Toscana,I,Arno,,
+Ancona,Marche,I,,,Mediterranean Sea
+Rome,Lazio,I,Tiber,,
+Pescara,Abruzzo,I,,,Mediterranean Sea
+Salerno,Campania,I,,,Mediterranean Sea
+Napoli,Campania,I,,,Mediterranean Sea
+Torre del Greco,Campania,I,,,Mediterranean Sea
+Bari,Puglia,I,,,Mediterranean Sea
+Taranto,Puglia,I,,,Mediterranean Sea
+Reggio di Calabria,Calabria,I,,,Mediterranean Sea
+Palermo,Sicilia,I,,,Mediterranean Sea
+Messina,Sicilia,I,,,Mediterranean Sea
+Catania,Sicilia,I,,,Mediterranean Sea
+Siracusa,Sicilia,I,,,Mediterranean Sea
+Cagliari,Sardegna,I,,,Mediterranean Sea
+Bratislava,Slovakia,SK,Donau,,
+Bratislava,Slovakia,SK,March,,
+Ljubljana,Slovenia,SLO,Save,,
+Aarau,AG,CH,Aare,,
+Basel,BS,CH,Rhein,,
+Bern,BE,CH,Aare,,
+Geneva,GE,CH,Rhone,Lac Leman,
+Chur,GR,CH,Rhein,,
+Luzern,LU,CH,Reuss,Vierwaldstattersee,
+Schaffhausen,SH,CH,Rhein,,
+Solothurn,SO,CH,Aare,,
+Bellinzona,TI,CH,Ticino,,
+Altdorf,UR,CH,Reuss,,
+Sion,VS,CH,Rhone,,
+Lausanne,VD,CH,,Lac Leman,
+Zurich,ZH,CH,Limmat,Zurichsee,
+Riga,Latvia,LV,Western Dwina,,Baltic Sea
+Warsaw,Warszwaskie,PL,Weichsel,,
+Bydgoszcz,Bydgoskie,PL,Weichsel,,
+Gdansk,Gdanskie,PL,Weichsel,,Baltic Sea
+Gdynia,Gdanskie,PL,,,Baltic Sea
+Krakow,Krakowskie,PL,Weichsel,,
+Opole,Opolskie,PL,Oder,,
+Szczecin,Szczecinskie,PL,Oder,,

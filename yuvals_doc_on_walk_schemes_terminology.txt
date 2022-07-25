@@ -1,0 +1,6 @@
+if we focus on this walk scheme:
+Country@target-Code@country>Code@country-Country1@borders>borders
+
+"@" - means "at" - for example: Country@target means the column Country at the table target 
+"-" - means "to" - for example: Country@target-Code@country means the FK transition from table target to table country using the FK Country-Code
+">" - means "seperation between 2 random walks"

@@ -1,0 +1,1602 @@
+Country,Organization,Type
+A,AfDB,nonregional member
+A,AG,observer
+A,ANC,member
+A,AsDB,nonregional member
+A,BIS,member
+A,CCC,member
+A,CE,member
+A,CEI,member
+A,CERN,member
+A,EBRD,member
+A,ECE,member
+A,EIB,member
+A,EN,member
+A,ESA,member
+A,EU,member
+A,FAO,member
+A,G-9,member
+A,IADB,member
+A,IAEA,member
+A,IBRD,member
+A,ICAO,member
+A,ICC,member
+A,ICFTU,member
+A,ICRM,National Society
+A,IDA,Part I
+A,IEA,member
+A,IFAD,Category I
+A,IFC,member
+A,IFRCS,member
+A,ILO,member
+A,IMF,member
+A,IMO,member
+A,Intelsat,member
+A,Interpol,member
+A,IOC,National Olympic Committee
+A,IOM,member
+A,ISO,member
+A,ITU,member
+A,MINURSO,member
+A,MTCR,member
+A,NAM,guest
+A,NSG,member
+A,OAS,observer
+A,OECD,member
+A,OSCE,member
+A,PCA,member
+A,PFP,member
+A,UN,member
+A,UNAMIR,member
+A,UNDOF,member
+A,UNESCO,member
+A,UNFICYP,member
+A,UNHCR,member
+A,UNIDO,member
+A,UNIKOM,member
+A,UNMIH,member
+A,UNMOT,member
+A,UNOMIG,member
+A,UNTSO,member
+A,UPU,member
+A,WCL,member
+A,WEU,observer
+A,WFTU,member
+A,WHO,member
+A,WIPO,member
+A,WMO,member
+A,WToO,member
+A,WTrO,member
+A,ZC,member
+AFG,AsDB,regional member
+AFG,CP,member
+AFG,ECO,member
+AFG,ESCAP,member
+AFG,FAO,member
+AFG,G-77,member
+AFG,IAEA,member
+AFG,IBRD,member
+AFG,ICAO,member
+AFG,ICRM,National Society
+AFG,IDA,Part II
+AFG,IDB,member
+AFG,IFAD,Category III
+AFG,IFC,member
+AFG,IFRCS,member
+AFG,ILO,member
+AFG,IMF,member
+AFG,Intelsat,member
+AFG,IOC,National Olympic Committee
+AFG,IOM,observer
+AFG,ITU,member
+AFG,NAM,member
+AFG,OIC,member
+AFG,UN,member
+AFG,UNESCO,member
+AFG,UNIDO,member
+AFG,UPU,member
+AFG,WFTU,member
+AFG,WHO,member
+AFG,WMO,member
+AFG,WToO,member
+AG,ACP,member
+AG,C,member
+AG,Caricom,member
+AG,CDB,regional member
+AG,ECLAC,member
+AG,FAO,member
+AG,G-77,member
+AG,IBRD,member
+AG,ICAO,member
+AG,ICFTU,member
+AG,ICRM,National Society
+AG,IFAD,Category III
+AG,IFC,member
+AG,IFRCS,member
+AG,ILO,member
+AG,IMF,member
+AG,IMO,member
+AG,Intelsat,nonsignatory user
+AG,Interpol,member
+AG,IOC,National Olympic Committee
+AG,ISO,subscriber member
+AG,ITU,member
+AG,NAM,observer
+AG,OAS,member
+AG,OECS,member
+AG,OPANAL,member
+AG,UN,member
+AG,UNESCO,member
+AG,UPU,member
+AG,WCL,member
+AG,WFTU,member
+AG,WHO,member
+AG,WMO,member
+AG,WTrO,member
+AL,ANC,member
+AL,BSEC,member
+AL,CCC,member
+AL,CE,member
+AL,EBRD,member
+AL,ECE,member
+AL,FAO,member
+AL,IAEA,member
+AL,IBRD,member
+AL,ICAO,member
+AL,ICRM,National Society
+AL,IDA,Part II
+AL,IDB,member
+AL,IFAD,Category III
+AL,IFC,member
+AL,IFRCS,member
+AL,ILO,member
+AL,IMF,member
+AL,IMO,member
+AL,Intelsat,nonsignatory user
+AL,Interpol,member
+AL,IOC,National Olympic Committee
+AL,IOM,member
+AL,ISO,member
+AL,ITU,member
+AL,OIC,member
+AL,OSCE,member
+AL,PFP,member
+AL,UN,member
+AL,UNESCO,member
+AL,UNIDO,member
+AL,UNOMIG,member
+AL,UPU,member
+AL,WFTU,member
+AL,WHO,member
+AL,WIPO,member
+AL,WMO,member
+AL,WToO,member
+AL,WTrO,applicant
+AMSA,Interpol,subbureau
+AMSA,IOC,National Olympic Committee
+AMSA,SPC,member
+AMSA,UPU,member
+AND,CE,member
+AND,ECE,member
+AND,IFRCS,member
+AND,Interpol,member
+AND,IOC,National Olympic Committee
+AND,ITU,member
+AND,UN,member
+AND,UNESCO,member
+AND,WIPO,member
+ANG,ACP,member
+ANG,AfDB,regional member
+ANG,CCC,member
+ANG,CEEAC,observer
+ANG,ECA,member
+ANG,FAO,member
+ANG,G-77,member
+ANG,IBRD,member
+ANG,ICAO,member
+ANG,ICRM,National Society
+ANG,IDA,Part II
+ANG,IFAD,Category III
+ANG,IFC,member
+ANG,IFRCS,member
+ANG,ILO,member
+ANG,IMF,member
+ANG,IMO,member
+ANG,Intelsat,member
+ANG,Interpol,member
+ANG,IOC,National Olympic Committee
+ANG,IOM,member
+ANG,ITU,member
+ANG,NAM,member
+ANG,OAS,observer
+ANG,OAU,member
+ANG,SADC,member
+ANG,UN,member
+ANG,UNESCO,member
+ANG,UNIDO,member
+ANG,UPU,member
+ANG,WCL,member
+ANG,WFTU,member
+ANG,WHO,member
+ANG,WIPO,member
+ANG,WMO,member
+ANG,WToO,member
+ARM,ANC,member
+ARM,BSEC,member
+ARM,CCC,member
+ARM,CIS,member
+ARM,EBRD,member
+ARM,ECE,member
+ARM,ESCAP,member
+ARM,FAO,member
+ARM,IAEA,member
+ARM,IBRD,member
+ARM,ICAO,member
+ARM,IDA,Part II
+ARM,IFAD,Category III
+ARM,IFC,member
+ARM,IFRCS,member
+ARM,ILO,member
+ARM,IMF,member
+ARM,Intelsat,member
+ARM,Interpol,member
+ARM,IOC,National Olympic Committee
+ARM,IOM,member
+ARM,ITU,member
+ARM,NAM,observer
+ARM,OSCE,member
+ARM,PFP,member
+ARM,UN,member
+ARM,UNESCO,member
+ARM,UNIDO,member
+ARM,UPU,member
+ARM,WHO,member
+ARM,WIPO,member
+ARM,WMO,member
+ARM,WTrO,applicant
+ARU,Caricom,observer
+ARU,ILO,member
+ARU,IMF,member
+ARU,Interpol,member
+ARU,IOC,National Olympic Committee
+ARU,UNESCO,associate member
+ARU,UPU,member
+ARU,WCL,member
+ARU,WFTU,member
+ARU,WMO,member
+AUS,AG,observer
+AUS,ANZUS,member
+AUS,AsDB,regional member
+AUS,BIS,member
+AUS,C,member
+AUS,CCC,member
+AUS,CP,member
+AUS,EBRD,member
+AUS,EN,member
+AUS,ESCAP,member
+AUS,FAO,member
+AUS,IAEA,member
+AUS,IBRD,member
+AUS,ICAO,member
+AUS,ICC,member
+AUS,ICFTU,member
+AUS,ICRM,National Society
+AUS,IDA,Part I
+AUS,IEA,member
+AUS,IFAD,Category I
+AUS,IFC,member
+AUS,IFRCS,member
+AUS,ILO,member
+AUS,IMF,member
+AUS,IMO,member
+AUS,Inmarsat,member
+AUS,Intelsat,member
+AUS,Interpol,member
+AUS,IOC,National Olympic Committee
+AUS,IOM,member
+AUS,ISO,member
+AUS,ITU,member
+AUS,MTCR,member
+AUS,NAM,guest
+AUS,NSG,member
+AUS,OECD,member
+AUS,PCA,member
+AUS,Sparteca,member
+AUS,SPC,member
+AUS,SPF,member
+AUS,UN,member
+AUS,UNAMIR,member
+AUS,UNESCO,member
+AUS,UNFICYP,member
+AUS,UNHCR,member
+AUS,UNIDO,member
+AUS,UNTSO,member
+AUS,UNU,member
+AUS,UPU,member
+AUS,WFTU,member
+AUS,WHO,member
+AUS,WIPO,member
+AUS,WMO,member
+AUS,WTrO,member
+AUS,ZC,member
+AXA,Caricom,observer
+AXA,CDB,regional member
+AXA,Interpol,subbureau
+AXA,OECS,associate member
+AXA,UPU,member
+AXA,WFTU,member
+AZ,ANC,member
+AZ,BSEC,member
+AZ,CCC,member
+AZ,CIS,member
+AZ,EBRD,member
+AZ,ECE,member
+AZ,ECO,member
+AZ,ESCAP,member
+AZ,FAO,member
+AZ,IBRD,member
+AZ,ICAO,member
+AZ,IDA,Part II
+AZ,IDB,member
+AZ,IFAD,Category III
+AZ,IFRCS,member
+AZ,ILO,member
+AZ,IMF,member
+AZ,IMO,member
+AZ,Intelsat,member
+AZ,Interpol,member
+AZ,IOC,National Olympic Committee
+AZ,ITU,member
+AZ,NAM,observer
+AZ,OIC,member
+AZ,OSCE,member
+AZ,PFP,member
+AZ,UN,member
+AZ,UNESCO,member
+AZ,UNIDO,member
+AZ,UPU,member
+AZ,WHO,member
+AZ,WIPO,member
+AZ,WMO,member
+AZ,WTrO,observer
+B,ACCT,member
+B,AfDB,nonregional member
+B,AG,observer
+B,ANC,member
+B,AsDB,nonregional member
+B,Benelux,member
+B,BIS,member
+B,CCC,member
+B,CE,member
+B,CERN,member
+B,EBRD,member
+B,ECE,member
+B,EIB,member
+B,EN,member
+B,ESA,member
+B,EU,member
+B,FAO,member
+B,G-10,member
+B,G-9,member
+B,IADB,member
+B,IAEA,member
+B,IBRD,member
+B,ICAO,member
+B,ICC,member
+B,ICFTU,member
+B,ICRM,National Society
+B,IDA,Part I
+B,IEA,member
+B,IFAD,Category I
+B,IFC,member
+B,IFRCS,member
+B,ILO,member
+B,IMF,member
+B,IMO,member
+B,Inmarsat,member
+B,Intelsat,member
+B,Interpol,member
+B,IOC,National Olympic Committee
+B,IOM,member
+B,ISO,member
+B,ITU,member
+B,MINURSO,member
+B,MTCR,member
+B,NATO,member
+B,NSG,member
+B,OAS,observer
+B,OECD,member
+B,OSCE,member
+B,PCA,member
+B,UN,member
+B,UNCRO,member
+B,UNESCO,member
+B,UNHCR,member
+B,UNIDO,member
+B,UNITAR,member
+B,UNMOGIP,member
+B,UNPROFOR,member
+B,UNRWA,member
+B,UNTSO,member
+B,UPU,member
+B,WCL,member
+B,WEU,member
+B,WHO,member
+B,WIPO,member
+B,WMO,member
+B,WToO,member
+B,WTrO,member
+B,ZC,member
+BD,AsDB,regional member
+BD,C,member
+BD,CCC,member
+BD,CP,member
+BD,ESCAP,member
+BD,FAO,member
+BD,G-77,member
+BD,IAEA,member
+BD,IBRD,member
+BD,ICAO,member
+BD,ICFTU,member
+BD,ICRM,National Society
+BD,IDA,Part II
+BD,IDB,member
+BD,IFAD,Category III
+BD,IFC,member
+BD,IFRCS,member
+BD,ILO,member
+BD,IMF,member
+BD,IMO,member
+BD,Inmarsat,member
+BD,Intelsat,member
+BD,Interpol,member
+BD,IOC,National Olympic Committee
+BD,IOM,member
+BD,ISO,member
+BD,ITU,member
+BD,MINURSO,member
+BD,NAM,member
+BD,OIC,member
+BD,SAARC,member
+BD,UN,member
+BD,UNAMIR,member
+BD,UNAVEM III,member
+BD,UNCRO,member
+BD,UNESCO,member
+BD,UNHCR,member
+BD,UNIDO,member
+BD,UNIKOM,member
+BD,UNMIH,member
+BD,UNMOT,member
+BD,UNOMIG,member
+BD,UNPREDEP,member
+BD,UNPROFOR,member
+BD,UNU,member
+BD,UPU,member
+BD,WCL,member
+BD,WFTU,member
+BD,WHO,member
+BD,WIPO,member
+BD,WMO,member
+BD,WToO,member
+BD,WTrO,member
+BDS,ACP,member
+BDS,C,member
+BDS,Caricom,member
+BDS,CDB,regional member
+BDS,ECLAC,member
+BDS,FAO,member
+BDS,G-77,member
+BDS,IADB,member
+BDS,IBRD,member
+BDS,ICAO,member
+BDS,ICFTU,member
+BDS,ICRM,National Society
+BDS,IFAD,Category III
+BDS,IFC,member
+BDS,IFRCS,member
+BDS,ILO,member
+BDS,IMF,member
+BDS,IMO,member
+BDS,Intelsat,member
+BDS,Interpol,member
+BDS,IOC,National Olympic Committee
+BDS,ISO,correspondent member
+BDS,ITU,member
+BDS,LAES,member
+BDS,NAM,member
+BDS,OAS,member
+BDS,OPANAL,member
+BDS,UN,member
+BDS,UNESCO,member
+BDS,UNIDO,member
+BDS,UNMIH,member
+BDS,UPU,member
+BDS,WHO,member
+BDS,WIPO,member
+BDS,WMO,member
+BDS,WTrO,member
+BEN,ACCT,member
+BEN,ACP,member
+BEN,AfDB,regional member
+BEN,ECA,member
+BEN,ECOWAS,member
+BEN,Entente,member
+BEN,FAO,member
+BEN,FZ,member
+BEN,G-77,member
+BEN,IBRD,member
+BEN,ICAO,member
+BEN,ICFTU,member
+BEN,ICRM,National Society
+BEN,IDA,Part II
+BEN,IDB,member
+BEN,IFAD,Category III
+BEN,IFC,member
+BEN,IFRCS,member
+BEN,ILO,member
+BEN,IMF,member
+BEN,IMO,member
+BEN,Intelsat,member
+BEN,Interpol,member
+BEN,IOC,National Olympic Committee
+BEN,ITU,member
+BEN,NAM,member
+BEN,OAU,member
+BEN,OIC,member
+BEN,UN,member
+BEN,UNESCO,member
+BEN,UNIDO,member
+BEN,UNMIH,member
+BEN,UPU,member
+BEN,WADB,member
+BEN,WCL,member
+BEN,WFTU,member
+BEN,WHO,member
+BEN,WIPO,member
+BEN,WMO,member
+BEN,WToO,member
+BERM,Caricom,observer
+BERM,ICFTU,member
+BERM,Interpol,subbureau
+BERM,IOC,National Olympic Committee
+BERM,UPU,member
+BERM,WFTU,member
+BF,ACCT,member
+BF,ACP,member
+BF,AfDB,regional member
+BF,CCC,member
+BF,ECA,member
+BF,ECOWAS,member
+BF,Entente,member
+BF,FAO,member
+BF,FZ,member
+BF,G-77,member
+BF,IBRD,member
+BF,ICAO,member
+BF,ICC,member
+BF,ICFTU,member
+BF,ICRM,National Society
+BF,IDA,Part II
+BF,IDB,member
+BF,IFAD,Category III
+BF,IFC,member
+BF,IFRCS,member
+BF,ILO,member
+BF,IMF,member
+BF,Intelsat,member
+BF,Interpol,member
+BF,IOC,National Olympic Committee
+BF,ITU,member
+BF,NAM,member
+BF,OAU,member
+BF,OIC,member
+BF,PCA,member
+BF,UN,member
+BF,UNESCO,member
+BF,UNIDO,member
+BF,UPU,member
+BF,WADB,member
+BF,WCL,member
+BF,WFTU,member
+BF,WHO,member
+BF,WIPO,member
+BF,WMO,member
+BF,WToO,member
+BF,WTrO,member
+BG,ACCT,member
+BG,ANC,member
+BG,BIS,member
+BG,BSEC,member
+BG,CCC,member
+BG,CE,member
+BG,CEI,associate member
+BG,EBRD,member
+BG,ECE,member
+BG,EU,member
+BG,FAO,member
+BG,G-9,member
+BG,IAEA,member
+BG,IBRD,member
+BG,ICAO,member
+BG,ICFTU,member
+BG,ICRM,National Society
+BG,IFC,member
+BG,IFRCS,member
+BG,ILO,member
+BG,IMF,member
+BG,IMO,member
+BG,Inmarsat,member
+BG,Intelsat,nonsignatory user
+BG,Interpol,member
+BG,IOC,National Olympic Committee
+BG,IOM,member
+BG,ISO,member
+BG,ITU,member
+BG,NAM,guest
+BG,NSG,member
+BG,OSCE,member
+BG,PCA,member
+BG,PFP,member
+BG,UN,member
+BG,UNAVEM III,member
+BG,UNESCO,member
+BG,UNIDO,member
+BG,UNMOT,member
+BG,UPU,member
+BG,WEU,associate partner
+BG,WFTU,member
+BG,WHO,member
+BG,WIPO,member
+BG,WMO,member
+BG,WToO,member
+BG,WTrO,applicant
+BG,ZC,member
+BHT,AsDB,regional member
+BHT,CP,member
+BHT,ESCAP,member
+BHT,FAO,member
+BHT,G-77,member
+BHT,IBRD,member
+BHT,ICAO,member
+BHT,IDA,Part II
+BHT,IFAD,Category III
+BHT,IMF,member
+BHT,Intelsat,member
+BHT,IOC,National Olympic Committee
+BHT,ITU,member
+BHT,NAM,member
+BHT,SAARC,member
+BHT,UN,member
+BHT,UNESCO,member
+BHT,UNIDO,member
+BHT,UPU,member
+BHT,WHO,member
+BHT,WIPO,member
+BI,ACCT,member
+BI,ACP,member
+BI,AfDB,regional member
+BI,CCC,member
+BI,CEEAC,member
+BI,CEPGL,member
+BI,ECA,member
+BI,FAO,member
+BI,G-77,member
+BI,IBRD,member
+BI,ICAO,member
+BI,ICRM,National Society
+BI,IDA,Part II
+BI,IFAD,Category III
+BI,IFC,member
+BI,IFRCS,member
+BI,ILO,member
+BI,IMF,member
+BI,Intelsat,nonsignatory user
+BI,Interpol,member
+BI,IOC,National Olympic Committee
+BI,ISO,subscriber member
+BI,ITU,member
+BI,NAM,member
+BI,OAU,member
+BI,UN,member
+BI,UNESCO,member
+BI,UNIDO,member
+BI,UPU,member
+BI,WHO,member
+BI,WIPO,member
+BI,WMO,member
+BI,WToO,member
+BI,WTrO,member
+BIH,CE,guest
+BIH,CEI,member
+BIH,ECE,member
+BIH,FAO,member
+BIH,ICAO,member
+BIH,IFAD,Category III
+BIH,ILO,member
+BIH,IMO,member
+BIH,Intelsat,nonsignatory user
+BIH,Interpol,member
+BIH,IOC,National Olympic Committee
+BIH,IOM,observer
+BIH,ITU,member
+BIH,NAM,guest
+BIH,OSCE,member
+BIH,UN,member
+BIH,UNESCO,member
+BIH,UNIDO,member
+BIH,UPU,member
+BIH,WHO,member
+BIH,WIPO,member
+BIH,WMO,member
+BIH,WToO,member
+BOL,AG,member
+BOL,ECLAC,member
+BOL,FAO,member
+BOL,G-11,member
+BOL,G-77,member
+BOL,IADB,member
+BOL,IAEA,member
+BOL,IBRD,member
+BOL,ICAO,member
+BOL,ICRM,National Society
+BOL,IDA,Part II
+BOL,IFAD,Category III
+BOL,IFC,member
+BOL,IFRCS,member
+BOL,ILO,member
+BOL,IMF,member
+BOL,IMO,member
+BOL,Intelsat,member
+BOL,Interpol,member
+BOL,IOC,National Olympic Committee
+BOL,IOM,member
+BOL,ITU,member
+BOL,LAES,member
+BOL,LAIA,member
+BOL,NAM,member
+BOL,OAS,member
+BOL,OPANAL,member
+BOL,PCA,member
+BOL,RG,member
+BOL,UN,member
+BOL,UNESCO,member
+BOL,UNIDO,member
+BOL,UPU,member
+BOL,WCL,member
+BOL,WFTU,member
+BOL,WHO,member
+BOL,WIPO,member
+BOL,WMO,member
+BOL,WToO,member
+BOL,WTrO,member
+BR,AfDB,nonregional member
+BR,AG,observer
+BR,CCC,member
+BR,ECLAC,member
+BR,FAO,member
+BR,G-11,member
+BR,G-15,member
+BR,G-19,member
+BR,G-24,member
+BR,G-77,member
+BR,IADB,member
+BR,IAEA,member
+BR,IBRD,member
+BR,ICAO,member
+BR,ICC,member
+BR,ICFTU,member
+BR,ICRM,National Society
+BR,IDA,Part II
+BR,IFAD,Category III
+BR,IFC,member
+BR,IFRCS,member
+BR,ILO,member
+BR,IMF,member
+BR,IMO,member
+BR,Inmarsat,member
+BR,Intelsat,member
+BR,Interpol,member
+BR,IOC,National Olympic Committee
+BR,IOM,observer
+BR,ISO,member
+BR,ITU,member
+BR,LAES,member
+BR,LAIA,member
+BR,Mercosur,member
+BR,MTCR,member
+BR,NAM,observer
+BR,NSG,member
+BR,OAS,member
+BR,OPANAL,member
+BR,PCA,member
+BR,RG,member
+BR,UN,member
+BR,UNAVEM III,member
+BR,UNCRO,member
+BR,UNESCO,member
+BR,UNHCR,member
+BR,UNIDO,member
+BR,UNPREDEP,member
+BR,UNPROFOR,member
+BR,UNU,member
+BR,UPU,member
+BR,WCL,member
+BR,WFTU,member
+BR,WHO,member
+BR,WIPO,member
+BR,WMO,member
+BR,WToO,member
+BR,WTrO,member
+BRN,ABEDA,member
+BRN,AFESD,member
+BRN,AL,member
+BRN,AMF,member
+BRN,ESCWA,member
+BRN,FAO,member
+BRN,G-77,member
+BRN,GCC,member
+BRN,IBRD,member
+BRN,ICAO,member
+BRN,ICRM,National Society
+BRN,IDB,member
+BRN,IFRCS,member
+BRN,ILO,member
+BRN,IMF,member
+BRN,IMO,member
+BRN,Inmarsat,member
+BRN,Intelsat,member
+BRN,Interpol,member
+BRN,IOC,National Olympic Committee
+BRN,ISO,correspondent member
+BRN,ITU,member
+BRN,NAM,member
+BRN,OAPEC,member
+BRN,OIC,member
+BRN,UN,member
+BRN,UNESCO,member
+BRN,UNIDO,member
+BRN,UPU,member
+BRN,WFTU,member
+BRN,WHO,member
+BRN,WIPO,member
+BRN,WMO,member
+BRN,WTrO,member
+BRU,ASEAN,member
+BRU,C,member
+BRU,ESCAP,member
+BRU,FAO,member
+BRU,G-77,member
+BRU,IBRD,member
+BRU,ICAO,member
+BRU,IDB,member
+BRU,IMF,member
+BRU,IMO,member
+BRU,Inmarsat,member
+BRU,Intelsat,member
+BRU,Interpol,member
+BRU,IOC,National Olympic Committee
+BRU,ISO,correspondent member
+BRU,ITU,member
+BRU,Mekong Group,member
+BRU,NAM,member
+BRU,OIC,member
+BRU,UN,member
+BRU,UPU,member
+BRU,WHO,member
+BRU,WIPO,member
+BRU,WMO,member
+BRU,WTrO,member
+BS,ACP,member
+BS,C,member
+BS,Caricom,member
+BS,CCC,member
+BS,CDB,regional member
+BS,ECLAC,member
+BS,FAO,member
+BS,G-77,member
+BS,IADB,member
+BS,IBRD,member
+BS,ICAO,member
+BS,ICFTU,member
+BS,ICRM,National Society
+BS,IFC,member
+BS,IFRCS,member
+BS,ILO,member
+BS,IMF,member
+BS,IMO,member
+BS,Inmarsat,member
+BS,Intelsat,member
+BS,Interpol,member
+BS,IOC,National Olympic Committee
+BS,ITU,member
+BS,NAM,member
+BS,OAS,member
+BS,OPANAL,member
+BS,UN,member
+BS,UNESCO,member
+BS,UNIDO,member
+BS,UNMIH,member
+BS,UPU,member
+BS,WHO,member
+BS,WIPO,member
+BS,WMO,member
+BVIR,Caricom,associate member
+BVIR,CDB,regional member
+BVIR,ECLAC,associate member
+BVIR,Interpol,subbureau
+BVIR,IOC,National Olympic Committee
+BVIR,OECS,associate member
+BVIR,UNESCO,associate member
+BVIR,UPU,member
+BVIR,WFTU,member
+BY,ANC,member
+BY,CCC,member
+BY,CE,guest
+BY,CEI,associate member
+BY,CIS,member
+BY,EBRD,member
+BY,ECE,member
+BY,IAEA,member
+BY,IBRD,member
+BY,ICAO,member
+BY,IFC,member
+BY,IFRCS,member
+BY,ILO,member
+BY,IMF,member
+BY,Inmarsat,member
+BY,Intelsat,nonsignatory user
+BY,Interpol,member
+BY,IOC,National Olympic Committee
+BY,IOM,observer
+BY,ISO,member
+BY,ITU,member
+BY,OSCE,member
+BY,PCA,member
+BY,PFP,member
+BY,UN,member
+BY,UNESCO,member
+BY,UNIDO,member
+BY,UPU,member
+BY,WHO,member
+BY,WIPO,member
+BY,WMO,member
+BY,WTrO,applicant
+BZ,ACP,member
+BZ,C,member
+BZ,Caricom,member
+BZ,CDB,regional member
+BZ,ECLAC,member
+BZ,FAO,member
+BZ,G-77,member
+BZ,IADB,member
+BZ,IBRD,member
+BZ,ICAO,member
+BZ,ICFTU,member
+BZ,ICRM,National Society
+BZ,IDA,Part II
+BZ,IFAD,Category III
+BZ,IFC,member
+BZ,IFRCS,member
+BZ,ILO,member
+BZ,IMF,member
+BZ,IMO,member
+BZ,Intelsat,nonsignatory user
+BZ,Interpol,member
+BZ,IOC,National Olympic Committee
+BZ,IOM,observer
+BZ,ITU,member
+BZ,LAES,member
+BZ,NAM,member
+BZ,OAS,member
+BZ,OPANAL,member
+BZ,UN,member
+BZ,UNESCO,member
+BZ,UNIDO,member
+BZ,UNMIH,member
+BZ,UPU,member
+BZ,WCL,member
+BZ,WHO,member
+BZ,WMO,member
+BZ,WTrO,member
+C,CCC,member
+C,ECLAC,member
+C,FAO,member
+C,G-77,member
+C,IAEA,member
+C,ICAO,member
+C,ICRM,National Society
+C,IFAD,Category III
+C,IFRCS,member
+C,ILO,member
+C,IMO,member
+C,Inmarsat,member
+C,Intelsat,nonsignatory user
+C,Interpol,member
+C,IOC,National Olympic Committee
+C,ISO,member
+C,ITU,member
+C,LAES,member
+C,LAIA,observer
+C,NAM,member
+C,OAS,member
+C,PCA,member
+C,UN,member
+C,UNESCO,member
+C,UNIDO,member
+C,UNOMIG,member
+C,UPU,member
+C,WCL,member
+C,WFTU,member
+C,WHO,member
+C,WIPO,member
+C,WMO,member
+C,WToO,member
+C,WTrO,member
+CAM,ACCT,member
+CAM,ACP,member
+CAM,AfDB,regional member
+CAM,BDEAC,member
+CAM,CCC,member
+CAM,CEEAC,member
+CAM,ECA,member
+CAM,FAO,member
+CAM,FZ,member
+CAM,G-19,member
+CAM,G-77,member
+CAM,IAEA,member
+CAM,IBRD,member
+CAM,ICAO,member
+CAM,ICC,member
+CAM,ICFTU,member
+CAM,ICRM,National Society
+CAM,IDA,Part II
+CAM,IDB,member
+CAM,IFAD,Category III
+CAM,IFC,member
+CAM,IFRCS,member
+CAM,ILO,member
+CAM,IMF,member
+CAM,IMO,member
+CAM,Inmarsat,member
+CAM,Intelsat,member
+CAM,Interpol,member
+CAM,IOC,National Olympic Committee
+CAM,ITU,member
+CAM,NAM,member
+CAM,OAU,member
+CAM,OIC,member
+CAM,PCA,member
+CAM,UDEAC,member
+CAM,UN,member
+CAM,UNESCO,member
+CAM,UNIDO,member
+CAM,UPU,member
+CAM,WCL,member
+CAM,WFTU,member
+CAM,WHO,member
+CAM,WIPO,member
+CAM,WMO,member
+CAM,WToO,member
+CAM,WTrO,member
+CAYM,Caricom,observer
+CAYM,CDB,regional member
+CAYM,Interpol,subbureau
+CAYM,IOC,National Olympic Committee
+CAYM,UNESCO,member
+CAYM,UPU,member
+CAYM,WFTU,member
+CDN,ACCT,member
+CDN,AfDB,nonregional member
+CDN,AG,observer
+CDN,ANC,member
+CDN,APEC,member
+CDN,AsDB,nonregional member
+CDN,BIS,member
+CDN,C,member
+CDN,CCC,member
+CDN,CDB,nonregional member
+CDN,EBRD,member
+CDN,ECE,member
+CDN,ECLAC,member
+CDN,EN,member
+CDN,ESA,cooperating state
+CDN,FAO,member
+CDN,G-10,member
+CDN,G-7,member
+CDN,G-8,member
+CDN,IADB,member
+CDN,IAEA,member
+CDN,IBRD,member
+CDN,ICAO,member
+CDN,ICC,member
+CDN,ICFTU,member
+CDN,ICRM,National Society
+CDN,IDA,Part I
+CDN,IEA,member
+CDN,IFAD,Category I
+CDN,IFC,member
+CDN,IFRCS,member
+CDN,ILO,member
+CDN,IMF,member
+CDN,IMO,member
+CDN,Inmarsat,member
+CDN,Intelsat,member
+CDN,Interpol,member
+CDN,IOC,National Olympic Committee
+CDN,IOM,member
+CDN,ISO,member
+CDN,ITU,member
+CDN,MTCR,member
+CDN,NAM,guest
+CDN,NATO,member
+CDN,NSG,member
+CDN,OAS,member
+CDN,OECD,member
+CDN,OSCE,member
+CDN,PCA,member
+CDN,UN,member
+CDN,UNAMIR,member
+CDN,UNCRO,member
+CDN,UNDOF,member
+CDN,UNESCO,member
+CDN,UNFICYP,member
+CDN,UNHCR,member
+CDN,UNIDO,member
+CDN,UNIKOM,member
+CDN,UNITAR,member
+CDN,UNMIH,member
+CDN,UNPREDEP,member
+CDN,UNPROFOR,member
+CDN,UNTSO,member
+CDN,UNU,member
+CDN,UPU,member
+CDN,WCL,member
+CDN,WFTU,member
+CDN,WHO,member
+CDN,WIPO,member
+CDN,WMO,member
+CDN,WToO,member
+CDN,WTrO,member
+CDN,ZC,member
+CH,AfDB,nonregional member
+CH,AG,observer
+CH,AsDB,nonregional member
+CH,BIS,member
+CH,CCC,member
+CH,CE,member
+CH,CERN,member
+CH,EBRD,member
+CH,ECE,member
+CH,EFTA,member
+CH,EN,member
+CH,ESA,member
+CH,FAO,member
+CH,G-10,member
+CH,IADB,member
+CH,IAEA,member
+CH,IBRD,member
+CH,ICAO,member
+CH,ICC,member
+CH,ICFTU,member
+CH,ICRM,National Society
+CH,IDA,Part I
+CH,IEA,member
+CH,IFAD,Category I
+CH,IFC,member
+CH,IFRCS,member
+CH,ILO,member
+CH,IMF,member
+CH,IMO,member
+CH,Inmarsat,member
+CH,Intelsat,member
+CH,Interpol,member
+CH,IOC,National Olympic Committee
+CH,IOM,member
+CH,ISO,member
+CH,ITU,member
+CH,MTCR,member
+CH,NAM,guest
+CH,NSG,member
+CH,OAS,observer
+CH,OECD,member
+CH,OSCE,member
+CH,PCA,member
+CH,UN,observer
+CH,UNAMIR,member
+CH,UNCTAD,member
+CH,UNESCO,member
+CH,UNHCR,member
+CH,UNIDO,member
+CH,UNITAR,member
+CH,UNMOT,member
+CH,UNOMIG,member
+CH,UNPREDEP,member
+CH,UNPROFOR,member
+CH,UNTSO,member
+CH,UNU,member
+CH,UPU,member
+CH,WCL,member
+CH,WHO,member
+CH,WIPO,member
+CH,WMO,member
+CH,WToO,member
+CH,WTrO,member
+CH,ZC,member
+CI,ACCT,member
+CI,ACP,member
+CI,AfDB,regional member
+CI,CCC,member
+CI,ECA,member
+CI,ECOWAS,member
+CI,Entente,member
+CI,FAO,member
+CI,FZ,member
+CI,G-24,member
+CI,G-77,member
+CI,IAEA,member
+CI,IBRD,member
+CI,ICAO,member
+CI,ICC,member
+CI,ICRM,National Society
+CI,IDA,Part II
+CI,IFAD,Category III
+CI,IFC,member
+CI,IFRCS,member
+CI,ILO,member
+CI,IMF,member
+CI,IMO,member
+CI,Intelsat,member
+CI,Interpol,member
+CI,IOC,National Olympic Committee
+CI,ITU,member
+CI,NAM,member
+CI,OAU,member
+CI,UN,member
+CI,UNESCO,member
+CI,UNIDO,member
+CI,UNITAR,member
+CI,UPU,member
+CI,WADB,member
+CI,WCL,member
+CI,WFTU,member
+CI,WHO,member
+CI,WIPO,member
+CI,WMO,member
+CI,WToO,member
+CI,WTrO,member
+CL,AsDB,regional member
+CL,C,member
+CL,CCC,member
+CL,CP,member
+CL,ESCAP,member
+CL,FAO,member
+CL,G-24,member
+CL,G-77,member
+CL,IAEA,member
+CL,IBRD,member
+CL,ICAO,member
+CL,ICC,member
+CL,ICFTU,member
+CL,ICRM,National Society
+CL,IDA,Part II
+CL,IFAD,Category III
+CL,IFC,member
+CL,IFRCS,member
+CL,ILO,member
+CL,IMF,member
+CL,IMO,member
+CL,Inmarsat,member
+CL,Intelsat,member
+CL,Interpol,member
+CL,IOC,National Olympic Committee
+CL,IOM,member
+CL,ISO,member
+CL,ITU,member
+CL,NAM,member
+CL,PCA,member
+CL,SAARC,member
+CL,UN,member
+CL,UNESCO,member
+CL,UNIDO,member
+CL,UNU,member
+CL,UPU,member
+CL,WCL,member
+CL,WFTU,member
+CL,WHO,member
+CL,WIPO,member
+CL,WMO,member
+CL,WToO,member
+CL,WTrO,member
+CO,AG,member
+CO,CCC,member
+CO,CDB,regional member
+CO,ECLAC,member
+CO,FAO,member
+CO,G-11,member
+CO,G-24,member
+CO,G-3,member
+CO,G-77,member
+CO,IADB,member
+CO,IAEA,member
+CO,IBRD,member
+CO,ICAO,member
+CO,ICC,member
+CO,ICFTU,member
+CO,ICRM,National Society
+CO,IDA,Part II
+CO,IFAD,Category III
+CO,IFC,member
+CO,IFRCS,member
+CO,ILO,member
+CO,IMF,member
+CO,IMO,member
+CO,Inmarsat,member
+CO,Intelsat,member
+CO,Interpol,member
+CO,IOC,National Olympic Committee
+CO,IOM,member
+CO,ISO,member
+CO,ITU,member
+CO,LAES,member
+CO,LAIA,member
+CO,NAM,member
+CO,OAS,member
+CO,OPANAL,member
+CO,PCA,member
+CO,RG,member
+CO,UN,member
+CO,UNESCO,member
+CO,UNHCR,member
+CO,UNIDO,member
+CO,UNU,member
+CO,UPU,member
+CO,WCL,member
+CO,WFTU,member
+CO,WHO,member
+CO,WIPO,member
+CO,WMO,member
+CO,WToO,member
+CO,WTrO,member
+COCO,WMO,member
+COM,ACCT,member
+COM,ACP,member
+COM,AfDB,regional member
+COM,AL,member
+COM,CCC,member
+COM,ECA,member
+COM,FAO,member
+COM,FZ,member
+COM,G-77,member
+COM,IBRD,member
+COM,ICAO,member
+COM,IDA,Part II
+COM,IDB,member
+COM,IFAD,Category III
+COM,IFC,member
+COM,IFRCS,associate member
+COM,ILO,member
+COM,IMF,member
+COM,Intelsat,nonsignatory user
+COM,IOC,National Olympic Committee
+COM,ITU,member
+COM,NAM,member
+COM,OAU,member
+COM,OIC,member
+COM,UN,member
+COM,UNESCO,member
+COM,UNIDO,member
+COM,UPU,member
+COM,WHO,member
+COM,WMO,member
+COOK,ACP,member
+COOK,FAO,member
+COOK,ICAO,member
+COOK,ICRM,National Society
+COOK,IFAD,Category III
+COOK,IFRCS,member
+COOK,IOC,National Olympic Committee
+COOK,Sparteca,member
+COOK,SPC,member
+COOK,UNESCO,member
+COOK,UPU,member
+COOK,WHO,member
+COOK,WMO,member
+CR,AG,observer
+CR,BCIE,member
+CR,CACM,member
+CR,ECLAC,member
+CR,FAO,member
+CR,G-77,member
+CR,IADB,member
+CR,IAEA,member
+CR,IBRD,member
+CR,ICAO,member
+CR,ICFTU,member
+CR,ICRM,National Society
+CR,IDA,Part II
+CR,IFAD,Category III
+CR,IFC,member
+CR,IFRCS,member
+CR,ILO,member
+CR,IMF,member
+CR,IMO,member
+CR,Intelsat,member
+CR,Interpol,member
+CR,IOC,National Olympic Committee
+CR,IOM,member
+CR,ITU,member
+CR,LAES,member
+CR,LAIA,observer
+CR,NAM,observer
+CR,OAS,member
+CR,OPANAL,member
+CR,UN,member
+CR,UNESCO,member
+CR,UNIDO,member
+CR,UNU,member
+CR,UPU,member
+CR,WCL,member
+CR,WFTU,member
+CR,WHO,member
+CR,WIPO,member
+CR,WMO,member
+CR,WTrO,member
+CV,ACP,member
+CV,AfDB,regional member
+CV,CCC,member
+CV,ECA,member
+CV,ECOWAS,member
+CV,FAO,member
+CV,G-77,member
+CV,IBRD,member
+CV,ICAO,member
+CV,ICFTU,member
+CV,ICRM,National Society
+CV,IDA,Part II
+CV,IFAD,Category III
+CV,IFC,member
+CV,IFRCS,member
+CV,ILO,member
+CV,IMF,member
+CV,IMO,member
+CV,Intelsat,member
+CV,Interpol,member
+CV,IOC,National Olympic Committee
+CV,IOM,observer
+CV,ITU,member
+CV,NAM,member
+CV,OAU,member
+CV,UN,member
+CV,UNESCO,member
+CV,UNIDO,member
+CV,UPU,member
+CV,WCL,member
+CV,WHO,member
+CV,WMO,member
+CV,WTrO,applicant
+CY,C,member
+CY,CCC,member
+CY,CE,member
+CY,EBRD,member
+CY,ECE,member
+CY,EU,member
+CY,FAO,member
+CY,G-77,member
+CY,IAEA,member
+CY,IBRD,member
+CY,ICAO,member
+CY,ICC,member
+CY,ICFTU,member
+CY,IDA,Part II
+CY,IFAD,Category III
+CY,IFC,member
+CY,IFRCS,associate member
+CY,ILO,member
+CY,IMF,member
+CY,IMO,member
+CY,Inmarsat,member
+CY,Intelsat,member
+CY,Interpol,member
+CY,IOC,National Olympic Committee
+CY,IOM,member
+CY,ISO,member
+CY,ITU,member
+CY,NAM,member
+CY,OAS,observer
+CY,OSCE,member
+CY,PCA,member
+CY,UN,member
+CY,UNESCO,member
+CY,UNIDO,member
+CY,UPU,member
+CY,WCL,member
+CY,WFTU,member
+CY,WHO,member
+CY,WIPO,member
+CY,WMO,member
+CY,WToO,member
+CY,WTrO,member
+CZ,ANC,member
+CZ,BIS,member
+CZ,CCC,member
+CZ,CE,member
+CZ,CEI,member
+CZ,CERN,member
+CZ,EBRD,member
+CZ,ECE,member
+CZ,EU,member
+CZ,FAO,member
+CZ,IAEA,member
+CZ,IBRD,member
+CZ,ICAO,member
+CZ,ICFTU,member
+CZ,ICRM,National Society
+CZ,IDA,Part II
+CZ,IFC,member
+CZ,IFRCS,member
+CZ,ILO,member
+CZ,IMF,member
+CZ,IMO,member
+CZ,Inmarsat,member
+CZ,Intelsat,member
+CZ,Interpol,member
+CZ,IOC,National Olympic Committee
+CZ,IOM,observer
+CZ,ISO,member
+CZ,ITU,member
+CZ,NSG,member
+CZ,OECD,member
+CZ,OSCE,member
+CZ,PCA,member
+CZ,PFP,member
+CZ,UN,member
+CZ,UNCRO,member
+CZ,UNESCO,member
+CZ,UNIDO,member
+CZ,UNOMIG,member
+CZ,UNOMIL,member
+CZ,UNPROFOR,member
+CZ,UPU,member
+CZ,WEU,associate partner
+CZ,WFTU,member
+CZ,WHO,member
+CZ,WIPO,member
+CZ,WMO,member
+CZ,WToO,member
+CZ,WTrO,member
+CZ,ZC,member
+D,AfDB,nonregional member
+D,AG,observer
+D,ANC,member
+D,AsDB,nonregional member
+D,BDEAC,member
+D,BIS,member
+D,CBSS,member
+D,CCC,member
+D,CDB,nonregional member
+D,CE,member
+D,CERN,member
+D,EBRD,member
+D,ECE,member
+D,EIB,member
+D,EN,member
+D,ESA,member
+D,EU,member
+D,FAO,member
+D,G-10,member
+D,G-5,member
+D,G-7,member
+D,G-8,member
+D,IADB,member
+D,IAEA,member
+D,IBRD,member
+D,ICAO,member
+D,ICC,member
+D,ICFTU,member
+D,ICRM,National Society
+D,IDA,Part I
+D,IEA,member
+D,IFAD,Category I
+D,IFC,member
+D,IFRCS,member
