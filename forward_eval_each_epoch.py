@@ -25,6 +25,7 @@ import json
 from datetime import datetime
 import pandas as pd
 from functools import reduce
+from schema_ek_variance import get_schema_variance
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -84,12 +85,53 @@ class Forward(torch.nn.Module):
         return x.cpu().detach().numpy()
 
 
-def train(model, loader, epochs):
+def eval_accuracy(model, split, classifier='SVM'):
+    scores = []
+    for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
+        embedding = model.get_embedding()
+        embedding = {r: embedding[i] for r, i in row_idx.items()}
+
+        X_train = np.float32([embedding[rows[j]] for j in train_index])
+        X_test = np.float32([embedding[rows[j]] for j in test_index])
+        Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
+
+        clf = MLPClassifier(max_iter=1000) if classifier == 'NN' else SVC(kernel='rbf', C=1.0)
+        clf = make_pipeline(StandardScaler(), clf)
+
+        clf.fit(X_train, Y_train)
+        score = clf.score(X_test, Y_test)
+        scores.append(float(score))
+    return np.mean(scores)
+
+
+def save_mesures(model, split, mesures_df, i, e, s_time, classifier='SVM', steps_per_epoch=0):
+    # eval the model after epoch {e}
+    if device.type != 'cpu':
+        torch.cuda.synchronize(device=device)
+    delay = time.time()
+    if e >= len(mesures_df):
+        mesures_df.loc[f"epoch_{e}"] = np.nan
+
+    time_e = delay - s_time[0]  # time passed until now
+    acc_e = eval_accuracy(model, split, classifier=classifier)
+    steps_e = steps_per_epoch * e  # steps is the number of times the grad decent is calculated (length of loader) besides the last itaration.
+    mesures_df[f'Acc_{i}'][f'epoch_{e}'] = acc_e
+    mesures_df[f'Time_{i}'][f'epoch_{e}'] = time_e
+    mesures_df[f'Steps_{i}'][f'epoch_{e}'] = steps_e
+    delay = time.time() - delay
+    s_time[0] += delay  # don't count that time
+
+
+def train(model, loader, epochs, split, mesures_df, i, classifier='SVM', s_time=[0]):
+    THRESHHOLD = 200
     model.to(device)
     model.train()
     opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for e in range(epochs):
+        if time.time() - s_time[0] > THRESHHOLD:
+            break
+        save_mesures(model, split, mesures_df, i, e, s_time, classifier=classifier, steps_per_epoch=len(loader))
         bar = tqdm(desc=f'Epoch {e + 1} Mean Loss: _')
         bar.reset(total=len(loader))
 
@@ -107,16 +149,13 @@ def train(model, loader, epochs):
             bar.set_description(desc=f'Epoch {e + 1} Mean Loss: {epoch_losses[-1]:.4f}')
             bar.update()
 
-            # embedding = model.get_embedding()
-            # embedding = {r: embedding[i] for r, i in row_idx.items()}
-            # io_utils.save_embedding(model_dir.replace("models", "Embeddings"), embedding)
-
         bar.close()
+    save_mesures(model, split, mesures_df, i, e, s_time, classifier=classifier)
 
     return model
 
 
-def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
+def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=None):
     # -# depth is used here
     tuples = [r for _, r, _ in db.iter_rows(db.predict_rel)]
     scheme_tuple_map = db.scheme_tuple_map(db.predict_rel, tuples, depth)
@@ -127,13 +166,13 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
     #     json.dump(dict(scheme_tuple_map), f)
 
     # -# cut half of the schemes
-    #scheme_tuple_map = {key: value for key, value in scheme_tuple_map.items() if len(key.split(">")) == 2+1} #if len(key.split(">")) == 4}
+    # scheme_tuple_map = {key: value for key, value in scheme_tuple_map.items() if len(key.split(">")) == 2+1} #if len(key.split(">")) == 4}
     # random.seed(0)
     # rand_list = random.sample(range(30), 12)
-    #scheme_tuple_map = {key: scheme_tuple_map[key] for key in [list(scheme_tuple_map.keys())[idx] for idx in [27, 12, 24, 13, 1, 8, 16, 15, 28, 9, 22, 11]]}
+    # scheme_tuple_map = {key: scheme_tuple_map[key] for key in [list(scheme_tuple_map.keys())[idx] for idx in [27, 12, 24, 13, 1, 8, 16, 15, 28, 9, 22, 11]]}
     # try try
-    #include_keys = list(scheme_tuple_map.keys())[::2] #take every second key only
-    #scheme_tuple_map = {key: value for key, value in scheme_tuple_map.items() if key in include_keys}
+    # include_keys = list(scheme_tuple_map.keys())[::2] #take every second key only
+    # scheme_tuple_map = {key: value for key, value in scheme_tuple_map.items() if key in include_keys}
     # try try
     """if yuval_change != '':
         random.seed(0)
@@ -207,7 +246,7 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
     elif yuval_change == 'EC_scheme_len_eq_2':
         subset_full_schemes = [scheme for scheme in subset_full_schemes if len(scheme.split("-")) == 2 + 1]
     elif yuval_change == 'EC_scheme_len_eq_3':
-        subset_full_schemes = [scheme for scheme in subset_full_schemes if len(scheme.split("-")) == 3+1]
+        subset_full_schemes = [scheme for scheme in subset_full_schemes if len(scheme.split("-")) == 3 + 1]
     elif 'r6_manual_reduce' in yuval_change:
         exp_num, rand_list = int(yuval_change.split('r6_manual_reduce')[-1]), []
         random.seed(0)
@@ -215,59 +254,113 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
             rand_list = random.sample(range(63), 30)
         subset_full_schemes = [subset_full_schemes[idx] for idx in rand_list]
         if exp_num == 1:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in remove_from_r6_to_reduce]
         elif exp_num == 2:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[0]]]
         elif exp_num == 3:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[1]]]
         elif exp_num == 4:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[2]]]
         elif exp_num == 5:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[3]]]
         elif exp_num == 6:
             subset_full_schemes = [subset_full_schemes[idx] for idx in random.sample(range(30), 29)]
         elif exp_num == 7:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[1:]]] # 1+2+3
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if
+                                   sc not in [remove_from_r6_to_reduce[1:]]]  # 1+2+3
         elif exp_num == 8:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country@province>Country@province-Country@city>city>Latitude@city"]
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country@province>Country@province-Country@city>city>Latitude@city"]
             subset_full_schemes = [sc for sc in subset_full_schemes if sc not in remove_from_r6_to_reduce]
         elif exp_num == 9:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[1:3]]] # 1+2
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[1:3]]]  # 1+2
         elif exp_num == 10:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[2:]]] # 2+3
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[2:]]]  # 2+3
         elif exp_num == 11:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in [remove_from_r6_to_reduce[1]]+[remove_from_r6_to_reduce[3]]] # 1+3
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Capital@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Name@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if
+                                   sc not in [remove_from_r6_to_reduce[1]] + [remove_from_r6_to_reduce[3]]]  # 1+3
         elif exp_num == 12:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country1@borders>borders>Length@borders","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in remove_from_r6_to_reduce] # boreder_len + 1+2+3
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country1@borders>borders>Length@borders",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if
+                                   sc not in remove_from_r6_to_reduce]  # boreder_len + 1+2+3
         elif exp_num == 13:
-            remove_from_r6_to_reduce = ["Country@target-Code@country>Code@country-Country1@borders>borders>Length@borders","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country","Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country","Country@target-Code@country>Code@country-Country@religion>religion>Percentage@religion"]
-            subset_full_schemes = [sc for sc in subset_full_schemes if sc not in remove_from_r6_to_reduce] # boreder_len + 1+2+3
-        elif exp_num in range(100,110):
-            for i in range(100,exp_num):
+            remove_from_r6_to_reduce = [
+                "Country@target-Code@country>Code@country-Country1@borders>borders>Length@borders",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Population@country",
+                "Country@target-Code@country>Code@country-Country2@borders>Country1@borders-Code@country>country>Province@country",
+                "Country@target-Code@country>Code@country-Country@religion>religion>Percentage@religion"]
+            subset_full_schemes = [sc for sc in subset_full_schemes if
+                                   sc not in remove_from_r6_to_reduce]  # boreder_len + 1+2+3
+        elif exp_num in range(100, 110):
+            for i in range(100, exp_num):
                 random.sample(range(30), 29)
             subset_full_schemes = [subset_full_schemes[idx] for idx in random.sample(range(30), 29)]
     elif 'conditional_entropy_removed_' in yuval_change:
         schemes_to_remove = int(yuval_change.split('conditional_entropy_removed_')[-1])
-        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(
+            entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
         subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][:-schemes_to_remove]
     elif 'conditional_entropy_from_low_to_high_removed_and_' in yuval_change:
-        schemes_to_remove = int(yuval_change.split('conditional_entropy_from_low_to_high_removed_and_')[-1].split("_")[0])
-        rest = [int(num) for num in yuval_change.split('conditional_entropy_from_low_to_high_removed_and_')[-1].split("_")[1:]]
-        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
-        subset_full_schemes = [val for idx, val in enumerate([scheme for scheme, v in ordered_schemes.items()]) if idx not in list(range(schemes_to_remove))+rest]
+        schemes_to_remove = int(
+            yuval_change.split('conditional_entropy_from_low_to_high_removed_and_')[-1].split("_")[0])
+        rest = [int(num) for num in
+                yuval_change.split('conditional_entropy_from_low_to_high_removed_and_')[-1].split("_")[1:]]
+        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(
+            entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        subset_full_schemes = [val for idx, val in enumerate([scheme for scheme, v in ordered_schemes.items()]) if
+                               idx not in list(range(schemes_to_remove)) + rest]
     elif 'conditional_entropy_from_low_to_high_removed_' in yuval_change:
         schemes_to_remove = int(yuval_change.split('conditional_entropy_from_low_to_high_removed_')[-1])
-        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(
+            entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
         subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]
     elif 'conditional_entropy_start_to_end_high_to_low_removed_' in yuval_change:
         schemes_to_remove = int(yuval_change.split('conditional_entropy_start_to_end_high_to_low_removed_')[-1])
@@ -281,77 +374,100 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
         subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]
     elif 'specific_entropy_' in yuval_change:
         scheme_to_remain = int(yuval_change.split('specific_entropy_')[-1])
-        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
-        subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][scheme_to_remain:scheme_to_remain+1]
+        ordered_schemes = entropy.sorted_dict_by_max_value_in_list(
+            entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][scheme_to_remain:scheme_to_remain + 1]
     elif 'remove_longest_schemes_' in yuval_change:
         scheme_to_remove = int(yuval_change.split('remove_longest_schemes_')[-1])
-        ordered_schemes = sorted([(len(scheme.split("-")),scheme) for scheme in subset_full_schemes],reverse=True)
+        ordered_schemes = sorted([(len(scheme.split("-")), scheme) for scheme in subset_full_schemes], reverse=True)
         subset_full_schemes = [scheme for l, scheme in ordered_schemes][scheme_to_remove:]
     elif 'Randomly_42seed_remove_schemes_' in yuval_change:
         scheme_to_remove = int(yuval_change.split('Randomly_42seed_remove_schemes_')[-1])
-        ordered_schemes = sorted([(len(scheme.split("-")),scheme) for scheme in subset_full_schemes],reverse=True)
+        ordered_schemes = sorted([(len(scheme.split("-")), scheme) for scheme in subset_full_schemes], reverse=True)
         subset_full_schemes = [scheme for l, scheme in ordered_schemes][scheme_to_remove:]
     elif 'sorted_by_loss_after_1_epoch_' in yuval_change:
         schemes_to_remove = int(yuval_change.split('sorted_by_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [39, 41, 44, 40, 42, 43, 38, 59, 60, 57, 35, 34, 33, 36, 37, 58, 29, 16, 10, 6, 8, 12, 7, 14, 13, 15, 9, 5, 11,
-         30, 24, 49, 0, 4, 47, 1, 2, 50, 3, 17, 28, 25, 27, 21, 45, 46, 31, 55, 56, 52, 62, 53, 18, 51, 54, 19, 32, 20,
-         61, 23, 48, 26, 22]
+        ordered_schemes_idxs = [39, 41, 44, 40, 42, 43, 38, 59, 60, 57, 35, 34, 33, 36, 37, 58, 29, 16, 10, 6, 8, 12, 7,
+                                14, 13, 15, 9, 5, 11,
+                                30, 24, 49, 0, 4, 47, 1, 2, 50, 3, 17, 28, 25, 27, 21, 45, 46, 31, 55, 56, 52, 62, 53,
+                                18, 51, 54, 19, 32, 20,
+                                61, 23, 48, 26, 22]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_by_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_by_highest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [39, 41, 44, 40, 42, 43, 38, 59, 60, 57, 35, 34, 33, 36, 37, 58, 29, 16, 10, 6, 8, 12, 7, 14, 13, 15, 9, 5, 11,
-         30, 24, 49, 0, 4, 47, 1, 2, 50, 3, 17, 28, 25, 27, 21, 45, 46, 31, 55, 56, 52, 62, 53, 18, 51, 54, 19, 32, 20,
-         61, 23, 48, 26, 22][::-1]
+        ordered_schemes_idxs = [39, 41, 44, 40, 42, 43, 38, 59, 60, 57, 35, 34, 33, 36, 37, 58, 29, 16, 10, 6, 8, 12, 7,
+                                14, 13, 15, 9, 5, 11,
+                                30, 24, 49, 0, 4, 47, 1, 2, 50, 3, 17, 28, 25, 27, 21, 45, 46, 31, 55, 56, 52, 62, 53,
+                                18, 51, 54, 19, 32, 20,
+                                61, 23, 48, 26, 22][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_by_highest_loss_after_10_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_by_highest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [7, 61, 62, 36, 48, 11, 41, 40, 54, 51, 37, 56, 53, 39, 55, 52, 46, 42, 10, 43, 44, 9, 8, 38, 3, 6, 45, 47, 2, 1, 50, 49, 4, 0, 28, 34, 30, 24, 5, 33, 27, 25, 26, 31, 35, 29, 32, 13, 15, 14, 16, 12, 58, 57, 17, 59, 60, 23, 20, 19, 22, 18, 21]
+        ordered_schemes_idxs = [7, 61, 62, 36, 48, 11, 41, 40, 54, 51, 37, 56, 53, 39, 55, 52, 46, 42, 10, 43, 44, 9, 8,
+                                38, 3, 6, 45, 47, 2, 1, 50, 49, 4, 0, 28, 34, 30, 24, 5, 33, 27, 25, 26, 31, 35, 29, 32,
+                                13, 15, 14, 16, 12, 58, 57, 17, 59, 60, 23, 20, 19, 22, 18, 21]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_by_lowest_loss_after_10_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_by_lowest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [7, 61, 62, 36, 48, 11, 41, 40, 54, 51, 37, 56, 53, 39, 55, 52, 46, 42, 10, 43, 44, 9, 8, 38, 3, 6, 45, 47, 2, 1, 50, 49, 4, 0, 28, 34, 30, 24, 5, 33, 27, 25, 26, 31, 35, 29, 32, 13, 15, 14, 16, 12, 58, 57, 17, 59, 60, 23, 20, 19, 22, 18, 21][::-1]
+        ordered_schemes_idxs = [7, 61, 62, 36, 48, 11, 41, 40, 54, 51, 37, 56, 53, 39, 55, 52, 46, 42, 10, 43, 44, 9, 8,
+                                38, 3, 6, 45, 47, 2, 1, 50, 49, 4, 0, 28, 34, 30, 24, 5, 33, 27, 25, 26, 31, 35, 29, 32,
+                                13, 15, 14, 16, 12, 58, 57, 17, 59, 60, 23, 20, 19, 22, 18, 21][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     elif 'sorted_correct_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_correct_highest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 23, 61, 20, 32, 19, 54, 51, 18, 53, 62, 52, 56, 55, 31, 46, 45, 21, 27, 25, 28, 17, 3, 50, 2, 1, 47, 4, 0, 49, 24, 30, 11, 5, 9, 15, 13, 14, 7, 12, 8, 6, 10, 16, 29, 58, 37, 36, 33, 34, 35, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39]
+        ordered_schemes_idxs = [22, 26, 48, 23, 61, 20, 32, 19, 54, 51, 18, 53, 62, 52, 56, 55, 31, 46, 45, 21, 27, 25,
+                                28, 17, 3, 50, 2, 1, 47, 4, 0, 49, 24, 30, 11, 5, 9, 15, 13, 14, 7, 12, 8, 6, 10, 16,
+                                29, 58, 37, 36, 33, 34, 35, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_correct_lowest_loss_after_1_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_correct_lowest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 23, 61, 20, 32, 19, 54, 51, 18, 53, 62, 52, 56, 55, 31, 46, 45, 21, 27, 25, 28, 17, 3, 50, 2, 1, 47, 4, 0, 49, 24, 30, 11, 5, 9, 15, 13, 14, 7, 12, 8, 6, 10, 16, 29, 58, 37, 36, 33, 34, 35, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39][::-1]
+        ordered_schemes_idxs = [22, 26, 48, 23, 61, 20, 32, 19, 54, 51, 18, 53, 62, 52, 56, 55, 31, 46, 45, 21, 27, 25,
+                                28, 17, 3, 50, 2, 1, 47, 4, 0, 49, 24, 30, 11, 5, 9, 15, 13, 14, 7, 12, 8, 6, 10, 16,
+                                29, 58, 37, 36, 33, 34, 35, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_correct_highest_loss_after_10_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_correct_highest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [26, 22, 23, 61, 48, 32, 20, 51, 54, 62, 19, 53, 56, 18, 52, 55, 25, 45, 21, 31, 46, 28, 27, 17, 3, 30, 24, 50, 2, 47, 49, 4, 1, 0, 9, 11, 15, 5, 14, 13, 8, 29, 12, 7, 6, 10, 16, 36, 37, 33, 35, 34, 58, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39]
+        ordered_schemes_idxs = [26, 22, 23, 61, 48, 32, 20, 51, 54, 62, 19, 53, 56, 18, 52, 55, 25, 45, 21, 31, 46, 28,
+                                27, 17, 3, 30, 24, 50, 2, 47, 49, 4, 1, 0, 9, 11, 15, 5, 14, 13, 8, 29, 12, 7, 6, 10,
+                                16, 36, 37, 33, 35, 34, 58, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_correct_lowest_loss_after_10_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_correct_lowest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [26, 22, 23, 61, 48, 32, 20, 51, 54, 62, 19, 53, 56, 18, 52, 55, 25, 45, 21, 31, 46, 28, 27, 17, 3, 30, 24, 50, 2, 47, 49, 4, 1, 0, 9, 11, 15, 5, 14, 13, 8, 29, 12, 7, 6, 10, 16, 36, 37, 33, 35, 34, 58, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39][::-1]
+        ordered_schemes_idxs = [26, 22, 23, 61, 48, 32, 20, 51, 54, 62, 19, 53, 56, 18, 52, 55, 25, 45, 21, 31, 46, 28,
+                                27, 17, 3, 30, 24, 50, 2, 47, 49, 4, 1, 0, 9, 11, 15, 5, 14, 13, 8, 29, 12, 7, 6, 10,
+                                16, 36, 37, 33, 35, 34, 58, 57, 60, 59, 38, 43, 42, 40, 44, 41, 39][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_genes_correct_highest_loss_after_10_epoch' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_correct_highest_loss_after_10_epoch')[-1])
-        ordered_schemes_idxs = [6, 0, 28, 16, 22, 7, 10, 8, 5, 20, 3, 30, 18, 29, 25, 17, 13, 27, 15, 2, 12, 21, 24, 9, 31, 1, 19, 11, 23, 4, 26, 14]
+        ordered_schemes_idxs = [6, 0, 28, 16, 22, 7, 10, 8, 5, 20, 3, 30, 18, 29, 25, 17, 13, 27, 15, 2, 12, 21, 24, 9,
+                                31, 1, 19, 11, 23, 4, 26, 14]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_genes_correct_lowest_loss_after_10_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_correct_lowest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [6, 0, 28, 16, 22, 7, 10, 8, 5, 20, 3, 30, 18, 29, 25, 17, 13, 27, 15, 2, 12, 21, 24, 9, 31, 1, 19, 11, 23, 4, 26, 14][::-1]
+        ordered_schemes_idxs = [6, 0, 28, 16, 22, 7, 10, 8, 5, 20, 3, 30, 18, 29, 25, 17, 13, 27, 15, 2, 12, 21, 24, 9,
+                                31, 1, 19, 11, 23, 4, 26, 14][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
-    #TODO run them:
+    # TODO run them:
     elif 'sorted_genes_mean_highest_loss_after_1_epoch' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_mean_highest_loss_after_1_epoch')[-1])
-        ordered_schemes_idxs = [0, 7, 6, 10, 22, 8, 20, 5, 18, 17, 29, 30, 28, 16, 3, 25, 2, 15, 27, 13, 21, 9, 12, 24, 1, 4, 31, 19, 23, 11, 14, 26]
+        ordered_schemes_idxs = [0, 7, 6, 10, 22, 8, 20, 5, 18, 17, 29, 30, 28, 16, 3, 25, 2, 15, 27, 13, 21, 9, 12, 24,
+                                1, 4, 31, 19, 23, 11, 14, 26]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_genes_mean_lowest_loss_after_1_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_mean_lowest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [0, 7, 6, 10, 22, 8, 20, 5, 18, 17, 29, 30, 28, 16, 3, 25, 2, 15, 27, 13, 21, 9, 12, 24, 1, 4, 31, 19, 23, 11, 14, 26][::-1]
+        ordered_schemes_idxs = [0, 7, 6, 10, 22, 8, 20, 5, 18, 17, 29, 30, 28, 16, 3, 25, 2, 15, 27, 13, 21, 9, 12, 24,
+                                1, 4, 31, 19, 23, 11, 14, 26][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_genes_mean_highest_loss_after_10_epoch' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_mean_highest_loss_after_10_epoch')[-1])
-        ordered_schemes_idxs = [30, 18, 28, 6, 16, 22, 10, 20, 8, 25, 13, 3, 29, 0, 17, 27, 7, 15, 5, 11, 23, 24, 12, 1, 2, 31, 19, 21, 9, 26, 14, 4]
+        ordered_schemes_idxs = [30, 18, 28, 6, 16, 22, 10, 20, 8, 25, 13, 3, 29, 0, 17, 27, 7, 15, 5, 11, 23, 24, 12, 1,
+                                2, 31, 19, 21, 9, 26, 14, 4]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_genes_mean_lowest_loss_after_10_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_genes_mean_lowest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [30, 18, 28, 6, 16, 22, 10, 20, 8, 25, 13, 3, 29, 0, 17, 27, 7, 15, 5, 11, 23, 24, 12, 1, 2, 31, 19, 21, 9, 26, 14, 4][::-1]
+        ordered_schemes_idxs = [30, 18, 28, 6, 16, 22, 10, 20, 8, 25, 13, 3, 29, 0, 17, 27, 7, 15, 5, 11, 23, 24, 12, 1,
+                                2, 31, 19, 21, 9, 26, 14, 4][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     elif 'sorted_hepatitis_mean_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
@@ -413,27 +529,39 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
 
     elif 'sorted_mondial_mean_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mondial_mean_highest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56, 55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2, 12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39]
+        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56,
+                                55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2,
+                                12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mondial_mean_lowest_loss_after_1_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mondial_mean_lowest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56, 55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2, 12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39][::-1]
+        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56,
+                                55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2,
+                                12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mean_highest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56, 55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2, 12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39]
+        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56,
+                                55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2,
+                                12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_lowest_loss_after_1_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mean_lowest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56, 55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2, 12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39][::-1]
+        ordered_schemes_idxs = [22, 26, 48, 38, 30, 23, 61, 20, 37, 32, 36, 33, 19, 34, 54, 35, 51, 18, 53, 62, 52, 56,
+                                55, 25, 31, 29, 46, 45, 5, 28, 27, 11, 21, 9, 15, 3, 13, 17, 14, 50, 24, 58, 7, 8, 2,
+                                12, 1, 47, 6, 4, 0, 49, 10, 16, 60, 57, 59, 43, 42, 40, 44, 41, 39][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_highest_loss_after_10_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mean_highest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [26, 22, 23, 61, 48, 30, 32, 20, 54, 51, 62, 19, 53, 25, 56, 36, 37, 52, 18, 55, 33, 35, 38, 34, 29, 45, 21, 31, 46, 9, 11, 15, 5, 28, 27, 24, 14, 8, 13, 17, 7, 12, 6, 3, 10, 16, 50, 2, 47, 4, 49, 1, 0, 58, 60, 57, 43, 59, 42, 40, 44, 41, 39]
+        ordered_schemes_idxs = [26, 22, 23, 61, 48, 30, 32, 20, 54, 51, 62, 19, 53, 25, 56, 36, 37, 52, 18, 55, 33, 35,
+                                38, 34, 29, 45, 21, 31, 46, 9, 11, 15, 5, 28, 27, 24, 14, 8, 13, 17, 7, 12, 6, 3, 10,
+                                16, 50, 2, 47, 4, 49, 1, 0, 58, 60, 57, 43, 59, 42, 40, 44, 41, 39]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_lowest_loss_after_10_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mean_lowest_loss_after_10_epoch_')[-1])
-        ordered_schemes_idxs = [26, 22, 23, 61, 48, 30, 32, 20, 54, 51, 62, 19, 53, 25, 56, 36, 37, 52, 18, 55, 33, 35, 38, 34, 29, 45, 21, 31, 46, 9, 11, 15, 5, 28, 27, 24, 14, 8, 13, 17, 7, 12, 6, 3, 10, 16, 50, 2, 47, 4, 49, 1, 0, 58, 60, 57, 43, 59, 42, 40, 44, 41, 39][::-1]
+        ordered_schemes_idxs = [26, 22, 23, 61, 48, 30, 32, 20, 54, 51, 62, 19, 53, 25, 56, 36, 37, 52, 18, 55, 33, 35,
+                                38, 34, 29, 45, 21, 31, 46, 9, 11, 15, 5, 28, 27, 24, 14, 8, 13, 17, 7, 12, 6, 3, 10,
+                                16, 50, 2, 47, 4, 49, 1, 0, 58, 60, 57, 43, 59, 42, 40, 44, 41, 39][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     # f"low_loss_tryout_{data_name}_try_out_mul{mul_by}"
@@ -443,20 +571,22 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
         with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
             d = json.load(f)
             ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
-            #TODO: if the lowest schemes have 0 loss dont remove them
+            # TODO: if the lowest schemes have 0 loss dont remove them
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     elif 'sorted_mean_lowest_loss_after_tryout_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_mean_lowest_loss_after_tryout_')[-1].split("_")[-1])
-        ordered_schemes_file_name = "_".join(yuval_change.split('sorted_mean_lowest_loss_after_tryout_')[-1].split("_")[:-1])
+        ordered_schemes_file_name = "_".join(
+            yuval_change.split('sorted_mean_lowest_loss_after_tryout_')[-1].split("_")[:-1])
         with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
             d = json.load(f)
             ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
-            #TODO: if the lowest schemes have 0 loss dont remove them
+            # TODO: if the lowest schemes have 0 loss dont remove them
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_lowest_loss_after_SnR_' in yuval_change:
         schemes_to_remove = int(yuval_change.split('sorted_mean_lowest_loss_after_SnR_')[-1].split("_")[-1])
-        ordered_schemes_file_name = "_".join(yuval_change.split('sorted_mean_lowest_loss_after_SnR_')[-1].split("_")[:-1])
+        ordered_schemes_file_name = "_".join(
+            yuval_change.split('sorted_mean_lowest_loss_after_SnR_')[-1].split("_")[:-1])
         with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
             d = json.load(f)
             ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
@@ -472,13 +602,67 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_d4_mean_highest_loss_after_1_epoch_' in yuval_change:  # highest loss first
         schemes_to_remove = int(yuval_change.split('sorted_d4_mean_highest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [128, 140, 141, 127, 144, 122, 146, 126, 138, 147, 121, 124, 123, 164, 184, 420, 334, 180, 429, 135, 321, 186, 212, 285, 335, 418, 428, 187, 241, 197, 419, 322, 210, 173, 283, 410, 421, 411, 172, 272, 298, 332, 244, 163, 255, 426, 353, 416, 296, 299, 177, 400, 381, 59, 200, 301, 213, 232, 273, 264, 286, 31, 376, 387, 199, 168, 243, 29, 263, 220, 32, 152, 252, 179, 270, 342, 161, 223, 309, 303, 341, 62, 155, 308, 366, 389, 61, 0, 230, 4, 233, 159, 222, 304, 1, 154, 171, 2, 339, 162, 261, 402, 306, 365, 170, 403, 319, 254, 10, 424, 354, 405, 129, 116, 125, 38, 392, 6, 363, 36, 390, 142, 352, 40, 378, 8, 7, 259, 3, 245, 114, 225, 414, 37, 326, 48, 423, 204, 191, 72, 65, 370, 195, 317, 215, 425, 330, 190, 413, 374, 313, 346, 350, 234, 117, 357, 23, 396, 12, 268, 281, 203, 312, 75, 76, 42, 53, 325, 35, 115, 277, 18, 415, 39, 229, 9, 290, 294, 5, 208, 219, 377, 409, 331, 69, 151, 260, 269, 239, 289, 228, 395, 386, 218, 139, 250, 181, 175, 247, 11, 318, 236, 46, 150, 49, 196, 369, 16, 276, 408, 399, 240, 174, 41, 149, 327, 182, 57, 19, 21, 209, 251, 56, 282, 90, 88, 192, 58, 136, 246, 345, 385, 28, 295, 351, 27, 375, 314, 257, 235, 51, 398, 205, 266, 291, 278, 143, 393, 406, 382, 73, 347, 13, 183, 176, 105, 338, 362, 380, 371, 64, 358, 361, 337, 34, 43, 431, 166, 356, 216, 106, 158, 14, 157, 226, 167, 86, 84, 77, 87, 98, 214, 391, 44, 15, 224, 66, 404, 133, 45, 85, 256, 78, 384, 336, 60, 360, 156, 165, 397, 265, 95, 93, 94, 30, 67, 333, 96, 349, 320, 91, 80, 68, 83, 305, 92, 293, 373, 300, 280, 198, 207, 82, 383, 97, 211, 119, 359, 316, 100, 329, 242, 194, 81, 253, 112, 103, 24, 113, 430, 118, 111, 110, 99, 178, 22, 368, 148, 63, 344, 71, 120, 79, 185, 271, 33, 262, 284, 417, 427, 89, 288, 132, 315, 275, 297, 54, 328, 52, 348, 131, 193, 249, 238, 372, 206, 108, 101, 323, 137, 279, 292, 310, 189, 26, 202, 102, 130, 311, 237, 324, 364, 407, 248, 201, 340, 394, 227, 302, 267, 258, 188, 217, 231, 160, 307, 169, 153, 55, 343, 221, 388, 274, 287, 379, 367, 401, 109, 355, 145, 107, 104, 422, 74, 20, 50, 412, 134, 25, 17, 70, 47][::-1]
+        ordered_schemes_idxs = [128, 140, 141, 127, 144, 122, 146, 126, 138, 147, 121, 124, 123, 164, 184, 420, 334,
+                                180, 429, 135, 321, 186, 212, 285, 335, 418, 428, 187, 241, 197, 419, 322, 210, 173,
+                                283, 410, 421, 411, 172, 272, 298, 332, 244, 163, 255, 426, 353, 416, 296, 299, 177,
+                                400, 381, 59, 200, 301, 213, 232, 273, 264, 286, 31, 376, 387, 199, 168, 243, 29, 263,
+                                220, 32, 152, 252, 179, 270, 342, 161, 223, 309, 303, 341, 62, 155, 308, 366, 389, 61,
+                                0, 230, 4, 233, 159, 222, 304, 1, 154, 171, 2, 339, 162, 261, 402, 306, 365, 170, 403,
+                                319, 254, 10, 424, 354, 405, 129, 116, 125, 38, 392, 6, 363, 36, 390, 142, 352, 40, 378,
+                                8, 7, 259, 3, 245, 114, 225, 414, 37, 326, 48, 423, 204, 191, 72, 65, 370, 195, 317,
+                                215, 425, 330, 190, 413, 374, 313, 346, 350, 234, 117, 357, 23, 396, 12, 268, 281, 203,
+                                312, 75, 76, 42, 53, 325, 35, 115, 277, 18, 415, 39, 229, 9, 290, 294, 5, 208, 219, 377,
+                                409, 331, 69, 151, 260, 269, 239, 289, 228, 395, 386, 218, 139, 250, 181, 175, 247, 11,
+                                318, 236, 46, 150, 49, 196, 369, 16, 276, 408, 399, 240, 174, 41, 149, 327, 182, 57, 19,
+                                21, 209, 251, 56, 282, 90, 88, 192, 58, 136, 246, 345, 385, 28, 295, 351, 27, 375, 314,
+                                257, 235, 51, 398, 205, 266, 291, 278, 143, 393, 406, 382, 73, 347, 13, 183, 176, 105,
+                                338, 362, 380, 371, 64, 358, 361, 337, 34, 43, 431, 166, 356, 216, 106, 158, 14, 157,
+                                226, 167, 86, 84, 77, 87, 98, 214, 391, 44, 15, 224, 66, 404, 133, 45, 85, 256, 78, 384,
+                                336, 60, 360, 156, 165, 397, 265, 95, 93, 94, 30, 67, 333, 96, 349, 320, 91, 80, 68, 83,
+                                305, 92, 293, 373, 300, 280, 198, 207, 82, 383, 97, 211, 119, 359, 316, 100, 329, 242,
+                                194, 81, 253, 112, 103, 24, 113, 430, 118, 111, 110, 99, 178, 22, 368, 148, 63, 344, 71,
+                                120, 79, 185, 271, 33, 262, 284, 417, 427, 89, 288, 132, 315, 275, 297, 54, 328, 52,
+                                348, 131, 193, 249, 238, 372, 206, 108, 101, 323, 137, 279, 292, 310, 189, 26, 202, 102,
+                                130, 311, 237, 324, 364, 407, 248, 201, 340, 394, 227, 302, 267, 258, 188, 217, 231,
+                                160, 307, 169, 153, 55, 343, 221, 388, 274, 287, 379, 367, 401, 109, 355, 145, 107, 104,
+                                422, 74, 20, 50, 412, 134, 25, 17, 70, 47][::-1]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_d4_mean_lowest_loss_after_1_epoch_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('sorted_d4_mean_lowest_loss_after_1_epoch_')[-1])
-        ordered_schemes_idxs = [128, 140, 141, 127, 144, 122, 146, 126, 138, 147, 121, 124, 123, 164, 184, 420, 334, 180, 429, 135, 321, 186, 212, 285, 335, 418, 428, 187, 241, 197, 419, 322, 210, 173, 283, 410, 421, 411, 172, 272, 298, 332, 244, 163, 255, 426, 353, 416, 296, 299, 177, 400, 381, 59, 200, 301, 213, 232, 273, 264, 286, 31, 376, 387, 199, 168, 243, 29, 263, 220, 32, 152, 252, 179, 270, 342, 161, 223, 309, 303, 341, 62, 155, 308, 366, 389, 61, 0, 230, 4, 233, 159, 222, 304, 1, 154, 171, 2, 339, 162, 261, 402, 306, 365, 170, 403, 319, 254, 10, 424, 354, 405, 129, 116, 125, 38, 392, 6, 363, 36, 390, 142, 352, 40, 378, 8, 7, 259, 3, 245, 114, 225, 414, 37, 326, 48, 423, 204, 191, 72, 65, 370, 195, 317, 215, 425, 330, 190, 413, 374, 313, 346, 350, 234, 117, 357, 23, 396, 12, 268, 281, 203, 312, 75, 76, 42, 53, 325, 35, 115, 277, 18, 415, 39, 229, 9, 290, 294, 5, 208, 219, 377, 409, 331, 69, 151, 260, 269, 239, 289, 228, 395, 386, 218, 139, 250, 181, 175, 247, 11, 318, 236, 46, 150, 49, 196, 369, 16, 276, 408, 399, 240, 174, 41, 149, 327, 182, 57, 19, 21, 209, 251, 56, 282, 90, 88, 192, 58, 136, 246, 345, 385, 28, 295, 351, 27, 375, 314, 257, 235, 51, 398, 205, 266, 291, 278, 143, 393, 406, 382, 73, 347, 13, 183, 176, 105, 338, 362, 380, 371, 64, 358, 361, 337, 34, 43, 431, 166, 356, 216, 106, 158, 14, 157, 226, 167, 86, 84, 77, 87, 98, 214, 391, 44, 15, 224, 66, 404, 133, 45, 85, 256, 78, 384, 336, 60, 360, 156, 165, 397, 265, 95, 93, 94, 30, 67, 333, 96, 349, 320, 91, 80, 68, 83, 305, 92, 293, 373, 300, 280, 198, 207, 82, 383, 97, 211, 119, 359, 316, 100, 329, 242, 194, 81, 253, 112, 103, 24, 113, 430, 118, 111, 110, 99, 178, 22, 368, 148, 63, 344, 71, 120, 79, 185, 271, 33, 262, 284, 417, 427, 89, 288, 132, 315, 275, 297, 54, 328, 52, 348, 131, 193, 249, 238, 372, 206, 108, 101, 323, 137, 279, 292, 310, 189, 26, 202, 102, 130, 311, 237, 324, 364, 407, 248, 201, 340, 394, 227, 302, 267, 258, 188, 217, 231, 160, 307, 169, 153, 55, 343, 221, 388, 274, 287, 379, 367, 401, 109, 355, 145, 107, 104, 422, 74, 20, 50, 412, 134, 25, 17, 70, 47]
+        ordered_schemes_idxs = [128, 140, 141, 127, 144, 122, 146, 126, 138, 147, 121, 124, 123, 164, 184, 420, 334,
+                                180, 429, 135, 321, 186, 212, 285, 335, 418, 428, 187, 241, 197, 419, 322, 210, 173,
+                                283, 410, 421, 411, 172, 272, 298, 332, 244, 163, 255, 426, 353, 416, 296, 299, 177,
+                                400, 381, 59, 200, 301, 213, 232, 273, 264, 286, 31, 376, 387, 199, 168, 243, 29, 263,
+                                220, 32, 152, 252, 179, 270, 342, 161, 223, 309, 303, 341, 62, 155, 308, 366, 389, 61,
+                                0, 230, 4, 233, 159, 222, 304, 1, 154, 171, 2, 339, 162, 261, 402, 306, 365, 170, 403,
+                                319, 254, 10, 424, 354, 405, 129, 116, 125, 38, 392, 6, 363, 36, 390, 142, 352, 40, 378,
+                                8, 7, 259, 3, 245, 114, 225, 414, 37, 326, 48, 423, 204, 191, 72, 65, 370, 195, 317,
+                                215, 425, 330, 190, 413, 374, 313, 346, 350, 234, 117, 357, 23, 396, 12, 268, 281, 203,
+                                312, 75, 76, 42, 53, 325, 35, 115, 277, 18, 415, 39, 229, 9, 290, 294, 5, 208, 219, 377,
+                                409, 331, 69, 151, 260, 269, 239, 289, 228, 395, 386, 218, 139, 250, 181, 175, 247, 11,
+                                318, 236, 46, 150, 49, 196, 369, 16, 276, 408, 399, 240, 174, 41, 149, 327, 182, 57, 19,
+                                21, 209, 251, 56, 282, 90, 88, 192, 58, 136, 246, 345, 385, 28, 295, 351, 27, 375, 314,
+                                257, 235, 51, 398, 205, 266, 291, 278, 143, 393, 406, 382, 73, 347, 13, 183, 176, 105,
+                                338, 362, 380, 371, 64, 358, 361, 337, 34, 43, 431, 166, 356, 216, 106, 158, 14, 157,
+                                226, 167, 86, 84, 77, 87, 98, 214, 391, 44, 15, 224, 66, 404, 133, 45, 85, 256, 78, 384,
+                                336, 60, 360, 156, 165, 397, 265, 95, 93, 94, 30, 67, 333, 96, 349, 320, 91, 80, 68, 83,
+                                305, 92, 293, 373, 300, 280, 198, 207, 82, 383, 97, 211, 119, 359, 316, 100, 329, 242,
+                                194, 81, 253, 112, 103, 24, 113, 430, 118, 111, 110, 99, 178, 22, 368, 148, 63, 344, 71,
+                                120, 79, 185, 271, 33, 262, 284, 417, 427, 89, 288, 132, 315, 275, 297, 54, 328, 52,
+                                348, 131, 193, 249, 238, 372, 206, 108, 101, 323, 137, 279, 292, 310, 189, 26, 202, 102,
+                                130, 311, 237, 324, 364, 407, 248, 201, 340, 394, 227, 302, 267, 258, 188, 217, 231,
+                                160, 307, 169, 153, 55, 343, 221, 388, 274, 287, 379, 367, 401, 109, 355, 145, 107, 104,
+                                422, 74, 20, 50, 412, 134, 25, 17, 70, 47]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
-
+    elif 'distribution_var_' in yuval_change:
+        schemes_to_remove = int(yuval_change.split('distribution_var_')[-1])
+        # ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        schema_ek_var = get_schema_variance(db, args.depth, args.num_samples, row_idx)
+        ordered_schemes = {k: v for k, v in sorted(schema_ek_var.items(), key=lambda item: item[1])}
+        if 'rev_' in yuval_change:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][::-1][schemes_to_remove:]
+        else:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]
     # after second epoch when first zeroed = [22, 26, 48, 23, 61, 32, 20, 19, 54, 51, 18, 53, 56, 52, 62, 55, 30, 31, 25, 45, 21, 46, 28, 27, 17, 3, 24, 50, 47,
     #  2, 4, 49, 1, 0, 9, 11, 15, 5, 14, 29, 13, 8, 12, 6, 7, 10, 16, 36, 33, 37, 35, 34, 58, 57, 60, 59, 38, 43, 40, 42,
     #  41, 39, 44]
@@ -488,7 +672,7 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
         ordered_schemes_idxs = list(range(len(subset_full_schemes)))
         np.random.shuffle(ordered_schemes_idxs)
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
-    #elif 'EC_specific' in yuval_change:
+    # elif 'EC_specific' in yuval_change:
     #    scheme_tuple_map = {key: scheme_tuple_map[key] for key in
     #                        [list(scheme_tuple_map.keys())[idx] for idx in [int(yuval_change[8:])]]}
     print(f'subset_full_schemes: \n{subset_full_schemes}')
@@ -501,7 +685,8 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
             for col_id in db.rel_comp_cols[cur_rel]:
                 full_scheme = f"{scheme}>{col_id}"
                 if full_scheme in subset_full_schemes:
-                    col_kernel = kernels_dict[col_id] if col_id in kernels_dict.keys() else kernels[db.get_col_type(col_id)]
+                    col_kernel = kernels_dict[col_id] if col_id in kernels_dict.keys() else kernels[
+                        db.get_col_type(col_id)]
                     pairs, values = sample_fct(db, col_id, tuple_map, num_samples, col_kernel)
                     samples[full_scheme] = (pairs, values)
 
@@ -526,9 +711,10 @@ def preproc_data(samples, model, batch_size):
     loader = DataLoader(data, batch_size=batch_size, shuffle=True, num_workers=8)
     return loader
 
+
 def preproc_data_tryout(samples, model, batch_size):
     # stack pairs of tuples and map them to integer indices
-    #pairs = np.vstack([p for p, _ in samples.values()])
+    # pairs = np.vstack([p for p, _ in samples.values()])
 
     # -# temp change for tryout
     pairs = np.vstack([p for p, v in samples.values() if v is not None])
@@ -538,7 +724,8 @@ def preproc_data_tryout(samples, model, batch_size):
     vals = torch.tensor(np.concatenate([v for _, v in samples.values() if v is not None], axis=0))
 
     # stack schemes and map them to integer indices
-    scheme = [np.int64([model.scheme_idx[s]] * samples[s][0].shape[0]) for s in samples.keys() if samples[s][0] is not None]
+    scheme = [np.int64([model.scheme_idx[s]] * samples[s][0].shape[0]) for s in samples.keys() if
+              samples[s][0] is not None]
     scheme = torch.tensor(np.concatenate(scheme, axis=0))
 
     # build torch loader for training
@@ -546,6 +733,7 @@ def preproc_data_tryout(samples, model, batch_size):
     # -# changed on vm because it crashed
     loader = DataLoader(data, batch_size=batch_size, shuffle=True, num_workers=8)
     return loader
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -570,9 +758,9 @@ if __name__ == '__main__':
         pt = datetime.strptime(args.pre_time, '%H:%M:%S')
         start -= (pt.second + pt.minute * 60 + pt.hour * 3600)  # add in seconds
 
-
-    mesures_df = pd.DataFrame(columns=reduce(lambda xs, ys: xs + ys, [[f"Acc_{i}", f"Time_{i}", f"Steps_{i}"] for i in range(10)]))
-    mesures_df['epochs'] = [f"epoch_{e}" for e in range(args.epochs)]
+    mesures_df = pd.DataFrame(
+        columns=reduce(lambda xs, ys: xs + ys, [[f"Acc_{i}", f"Time_{i}", f"Steps_{i}"] for i in range(10)]))
+    mesures_df['epochs'] = [f"epoch_{e}" for e in range(1)]
     mesures_df.set_index('epochs', inplace=True)
 
     data_path = f'Datasets/{args.data_name}'
@@ -589,12 +777,15 @@ if __name__ == '__main__':
     sample_fct = ek_utlis.ek_sample_fct if args.kernel == 'EK' else mmd_utils.mmd_sample_fct
 
     Y, rows = db.get_labels()
+    row_idx = {r: i for i, r in enumerate(rows)}
+    before_training_time = time.time() - start
 
     scores = []
-    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)
-    for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
-        samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change)
-        row_idx = {r: i for i, r in enumerate(rows)}
+    n_splits = 10
+    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=n_splits)  # every run has the same splits
+    for i in range(n_splits):
+        start = time.time() - before_training_time
+        samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change, row_idx)
         scheme_idx = {s: i for i, s in enumerate(samples.keys())}
         model = Forward(args.dim, len(samples), row_idx, scheme_idx)
 
@@ -603,29 +794,36 @@ if __name__ == '__main__':
             loader = preproc_data(samples, model, args.batch_size)
         except Exception as e:
             loader = preproc_data_tryout(samples, model, args.batch_size)
-        train(model, loader, args.epochs)
+        # eval_accuracy(model, train_index, test_index, classifier='SVM')
+        temp = [start]
+        train(model, loader, args.epochs, split, mesures_df, i, classifier=args.classifier, s_time=temp)
+        start = temp[0]
 
         embedding = model.get_embedding()
         embedding = {r: embedding[i] for r, i in row_idx.items()}
-
-        X_train = np.float32([embedding[rows[j]] for j in train_index])
-        X_test = np.float32([embedding[rows[j]] for j in test_index])
-        Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
-
-        clf = MLPClassifier(max_iter=1000) if args.classifier == 'NN' else SVC(kernel='rbf', C=1.0)
-        clf = make_pipeline(StandardScaler(), clf)
-
-        clf.fit(X_train, Y_train)
-        score = clf.score(X_test, Y_test)
-
+        #
+        # X_train = np.float32([embedding[rows[j]] for j in train_index])
+        # X_test = np.float32([embedding[rows[j]] for j in test_index])
+        # Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
+        #
+        # clf = MLPClassifier(max_iter=1000) if args.classifier == 'NN' else SVC(kernel='rbf', C=1.0)
+        # clf = make_pipeline(StandardScaler(), clf)
+        #
+        # clf.fit(X_train, Y_train)
+        # score = clf.score(X_test, Y_test)
+        #
+        score = eval_accuracy(model, split, classifier=args.classifier)
         scores.append(float(score))
 
         if i == 0:
             io_utils.save_embedding(model_dir.replace("models", "Embeddings"), embedding)
             emb_time = strftime("%H:%M:%S", gmtime(time.time() - start))
-        save_dict({'scores': scores, 'time': strftime("%H:%M:%S", gmtime(time.time() - start)), "emb_time": emb_time}, f'{model_dir}/results.json')
+        mesures_df.to_csv(f'{model_dir}/mesures.csv', index=False)
+        save_dict({'scores': scores, 'time': strftime("%H:%M:%S", gmtime(time.time() - start)), "emb_time": emb_time},
+                  f'{model_dir}/results.json')
         print(f"Run {i}; Accuracy: {score:.2f}")
 
     print(f'Acc: {np.mean(scores):.4f} (+-{np.std(scores):.4f})')
     # total time taken
-    print(f'Runtime of the program is {time.time() - start} seconds = {strftime("%H:%M:%S", gmtime(time.time() - start))}')
+    print(
+        f'Runtime of the program is {time.time() - start} seconds = {strftime("%H:%M:%S", gmtime(time.time() - start))}')
