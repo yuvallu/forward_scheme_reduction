@@ -24,6 +24,10 @@ from torch_scatter import scatter  # pip install torch-scatter -f https://data.p
 import io_utils
 import json
 from datetime import datetime
+import matplotlib.pyplot as plt
+import pandas as pd
+from functools import reduce
+from schema_ek_variance import get_schema_variance
 
 SAVE_EMBEDDINGS_EACH_EPOCH = False  # True
 
@@ -88,8 +92,43 @@ class Forward(torch.nn.Module):
 
         return x.cpu().detach().numpy()
 
+def eval_accuracy(model, split, classifier='SVM'):
+    scores = []
+    for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
+        embedding = model.get_embedding()
+        embedding = {r: embedding[i] for r, i in row_idx.items()}
 
-def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "num_epochs": 1, "tryout": False, "start_time": 0, "stop_n_restart": -1}, exp_name=""):
+        X_train = np.float32([embedding[rows[j]] for j in train_index])
+        X_test = np.float32([embedding[rows[j]] for j in test_index])
+        Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
+
+        clf = MLPClassifier(max_iter=1000) if classifier == 'NN' else SVC(kernel='rbf', C=1.0)
+        clf = make_pipeline(StandardScaler(), clf)
+
+        clf.fit(X_train, Y_train)
+        score = clf.score(X_test, Y_test)
+        scores.append(float(score))
+    return np.mean(scores)
+
+
+def save_mesures(model, split, mesures_df, i, e, s_time, classifier='SVM', steps_per_epoch=0):
+    # eval the model after epoch {e}
+    if device.type != 'cpu':
+        torch.cuda.synchronize(device=device)
+    delay = time.time()
+    if e >= len(mesures_df):
+        mesures_df.loc[f"epoch_{e}"] = np.nan
+
+    time_e = delay - s_time[0]  # time passed until now
+    acc_e = eval_accuracy(model, split, classifier=classifier)
+    steps_e = steps_per_epoch * e  # steps is the number of times the grad decent is calculated (length of loader) besides the last itaration.
+    mesures_df[f'Acc_{i}'][f'epoch_{e}'] = acc_e
+    mesures_df[f'Time_{i}'][f'epoch_{e}'] = time_e
+    mesures_df[f'Steps_{i}'][f'epoch_{e}'] = steps_e
+    delay = time.time() - delay
+    s_time[0] += delay  # don't count that time
+
+def train(model, data3, epochs, batch_size, split, mesures_df, i, classifier='SVM', s_time=[0], threshold=-1, args_train={"percent_remove": 0, "num_epochs": 1, "tryout": False, "start_time": 0, "stop_n_restart": -1}, exp_name=""):
     # args_train["tryout"] = False  ############# -#
     model.to(device)
     model.train()
@@ -100,6 +139,8 @@ def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "nu
 
     schemes_removed = torch.tensor([])
     for e in range(epochs):
+        if threshold != -1 and time.time() - s_time[0] > threshold:
+            break
         if args_train["stop_n_restart"] == e:  # should be -1 if not in stop_n_restart
             break  # go to the tryout if and exit there
         if SAVE_EMBEDDINGS_EACH_EPOCH:
@@ -107,6 +148,7 @@ def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "nu
             embedding = {r: embedding[i] for r, i in row_idx.items()}
             io_utils.save_embedding(model_dir.replace("models", "Embeddings") + f"_epoch_{e}", embedding)
         loader = DataLoader(data3, batch_size=batch_size, shuffle=True, num_workers=8)
+        save_mesures(model, split, mesures_df, i, e, s_time, classifier=classifier, steps_per_epoch=len(loader))
 
         bar = tqdm(desc=f'Epoch {e + 1} Mean Loss: _')
         bar.reset(total=len(loader))
@@ -135,6 +177,11 @@ def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "nu
 
         bar.close()
 
+        # plt.scatter(loss_per_scheme.detach().numpy(), torch.linalg.matrix_norm(model.A, dim=(1, 2)).detach().numpy())
+        # plt.xlabel('loss_per_scheme')
+        # plt.ylabel('norm_per_scheme')
+        # plt.show()
+
         if len(schemes_removed) < model.num_relations * args_train["percent_remove"]:
             # TODO: run to get order for exp
             # print(f"Ordered schemes from lowest loss to highest: {torch.sort(loss_per_scheme, descending=False).indices.tolist()}")
@@ -151,6 +198,7 @@ def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "nu
             data3 = TensorDataset(data3[0], data3[1], data3[2])
 
             schemes_removed = torch.cat((schemes_removed, schemes_to_remove), 0)
+    save_mesures(model, split, mesures_df, i, e, s_time, classifier=classifier)
 
     if args_train["tryout"]:
         # save Ordered schemes from lowest loss to highest + Dict
@@ -170,7 +218,7 @@ def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "nu
     return model
 
 
-def get_samples(db, depth, num_samples, sample_fct, yuval_change=''):
+def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=None):
     # -# depth is used here
     tuples = [r for _, r, _ in db.iter_rows(db.predict_rel)]
     scheme_tuple_map = db.scheme_tuple_map(db.predict_rel, tuples, depth)
@@ -526,6 +574,7 @@ if __name__ == '__main__':
     parser.add_argument("--tryout", type=bool, default=False, help="Is tryout experiment")
     parser.add_argument("--pre_time", type=str, default='', help="pre processing time in str format")
     parser.add_argument("--stop_n_restart", type=int, default=-1, help="stop after ? epochs (before restart)")
+    parser.add_argument("--threshold", type=int, default=-1, help="threshold for running the algorithm for threshold seconds (regardless the epochs)")
     args = parser.parse_args()
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -534,6 +583,11 @@ if __name__ == '__main__':
     if args.pre_time != '':
         pt = datetime.strptime(args.pre_time, '%H:%M:%S')
         start -= (pt.second + pt.minute * 60 + pt.hour * 3600)  # add in seconds
+
+    mesures_df = pd.DataFrame(
+        columns=reduce(lambda xs, ys: xs + ys, [[f"Acc_{i}", f"Time_{i}", f"Steps_{i}"] for i in range(10)]))
+    mesures_df['epochs'] = [f"epoch_{e}" for e in range(1)]
+    mesures_df.set_index('epochs', inplace=True)
 
     data_path = f'Datasets/{args.data_name}'
     db = Database.load_csv(data_path)
@@ -550,12 +604,15 @@ if __name__ == '__main__':
     sample_fct = ek_utlis.ek_sample_fct if args.kernel == 'EK' else mmd_utils.mmd_sample_fct
 
     Y, rows = db.get_labels()
+    row_idx = {r: i for i, r in enumerate(rows)}
+    before_training_time = time.time() - start
 
     scores = []
-    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)
-    for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
-        samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change)
-        row_idx = {r: i for i, r in enumerate(rows)}
+    n_splits = 10
+    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=n_splits)  # every run has the same splits
+    for i in range(n_splits):
+        start = time.time() - before_training_time
+        samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change, row_idx)
         scheme_idx = {s: i for i, s in enumerate(samples.keys())}
         model = Forward(args.dim, len(samples), row_idx, scheme_idx)
 
@@ -570,11 +627,12 @@ if __name__ == '__main__':
             if args.pre_time != '':
                 pt = datetime.strptime(args.pre_time, '%H:%M:%S')
                 start -= (pt.second + pt.minute * 60 + pt.hour * 3600)  # add in seconds
-
-        train(model, data3, args.epochs, args.batch_size,
+        temp = [start]
+        train(model, data3, args.epochs, args.batch_size, split, mesures_df, i, classifier=args.classifier, s_time=temp, threshold=args.threshold, args_train=
               {"percent_remove": 0, "num_epochs": 1, "tryout": args.tryout, "start_time": start, "stop_n_restart": args.stop_n_restart} if args.train is None else {
                   "percent_remove": int(args.train.split("%")[0]) / 100, "num_epochs": int(args.train.split("%")[-1]),
                   "tryout": args.tryout, "start_time": start, "stop_n_restart": args.stop_n_restart}, exp_name=args.yuval_change)
+        start = temp[0]
         embedding = model.get_embedding()
         embedding = {r: embedding[i] for r, i in row_idx.items()}
 
@@ -590,21 +648,23 @@ if __name__ == '__main__':
         # m.wv.save_word2vec_format(output_embeddings_file, binary=False)
         # # get from file: model1 = models.KeyedVectors.load_word2vec_format(input_file, binary=False)
 
-        X_train = np.float32([embedding[rows[j]] for j in train_index])
-        X_test = np.float32([embedding[rows[j]] for j in test_index])
-        Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
+        # X_train = np.float32([embedding[rows[j]] for j in train_index])
+        # X_test = np.float32([embedding[rows[j]] for j in test_index])
+        # Y_train, Y_test = [Y[i] for i in train_index], [Y[i] for i in test_index]
+        #
+        # clf = MLPClassifier(max_iter=1000) if args.classifier == 'NN' else SVC(kernel='rbf', C=1.0)
+        # clf = make_pipeline(StandardScaler(), clf)
+        #
+        # clf.fit(X_train, Y_train)
+        # score = clf.score(X_test, Y_test)
 
-        clf = MLPClassifier(max_iter=1000) if args.classifier == 'NN' else SVC(kernel='rbf', C=1.0)
-        clf = make_pipeline(StandardScaler(), clf)
-
-        clf.fit(X_train, Y_train)
-        score = clf.score(X_test, Y_test)
-
+        score = eval_accuracy(model, split, classifier=args.classifier)
         scores.append(float(score))
 
         if i == 0:
             io_utils.save_embedding(model_dir.replace("models", "Embeddings"), embedding)
             emb_time = strftime("%H:%M:%S", gmtime(time.time() - start))
+        mesures_df.to_csv(f'{model_dir}/mesures.csv', index=False)
         save_dict({'scores': scores, 'time': strftime("%H:%M:%S", gmtime(time.time() - start)), "emb_time": emb_time}, f'{model_dir}/results.json')
         print(f"Run {i}; Accuracy: {score:.2f}")
 

@@ -122,14 +122,13 @@ def save_mesures(model, split, mesures_df, i, e, s_time, classifier='SVM', steps
     s_time[0] += delay  # don't count that time
 
 
-def train(model, loader, epochs, split, mesures_df, i, classifier='SVM', s_time=[0]):
-    THRESHHOLD = 200
+def train(model, loader, epochs, split, mesures_df, i, classifier='SVM', s_time=[0], threshold=-1):
     model.to(device)
     model.train()
     opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for e in range(epochs):
-        if time.time() - s_time[0] > THRESHHOLD:
+        if threshold != -1 and time.time() - s_time[0] > threshold:
             break
         save_mesures(model, split, mesures_df, i, e, s_time, classifier=classifier, steps_per_epoch=len(loader))
         bar = tqdm(desc=f'Epoch {e + 1} Mean Loss: _')
@@ -749,6 +748,7 @@ if __name__ == '__main__':
     parser.add_argument("--yuval_change", type=str, default='', help="Yuval's experiment description")
     parser.add_argument("--tryout", type=bool, default=False, help="Is tryout experiment")
     parser.add_argument("--pre_time", type=str, default='', help="pre processing time in str format")
+    parser.add_argument("--threshold", type=int, default=-1, help="threshold for running the algorithm for threshold seconds (regardless the epochs)")
     args = parser.parse_args()
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -796,7 +796,7 @@ if __name__ == '__main__':
             loader = preproc_data_tryout(samples, model, args.batch_size)
         # eval_accuracy(model, train_index, test_index, classifier='SVM')
         temp = [start]
-        train(model, loader, args.epochs, split, mesures_df, i, classifier=args.classifier, s_time=temp)
+        train(model, loader, args.epochs, split, mesures_df, i, classifier=args.classifier, s_time=temp, threshold=args.threshold)
         start = temp[0]
 
         embedding = model.get_embedding()
