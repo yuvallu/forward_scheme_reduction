@@ -552,8 +552,12 @@ if __name__ == '__main__':
     Y, rows = db.get_labels()
 
     scores = []
-    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)
-    for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
+    if "yan81" in args.yuval_change:
+        for_loop = enumerate(zip(range(10), range(10)))
+    else:  # all but sampling
+        split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)
+        for_loop = enumerate(split.split(rows, Y))
+    for i, (train_index, test_index) in for_loop:
         samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change)
         row_idx = {r: i for i, r in enumerate(rows)}
         scheme_idx = {s: i for i, s in enumerate(samples.keys())}
@@ -570,7 +574,6 @@ if __name__ == '__main__':
             if args.pre_time != '':
                 pt = datetime.strptime(args.pre_time, '%H:%M:%S')
                 start -= (pt.second + pt.minute * 60 + pt.hour * 3600)  # add in seconds
-
         train(model, data3, args.epochs, args.batch_size,
               {"percent_remove": 0, "num_epochs": 1, "tryout": args.tryout, "start_time": start, "stop_n_restart": args.stop_n_restart} if args.train is None else {
                   "percent_remove": int(args.train.split("%")[0]) / 100, "num_epochs": int(args.train.split("%")[-1]),

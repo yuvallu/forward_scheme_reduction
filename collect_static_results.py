@@ -17,5 +17,4 @@ if __name__ == '__main__':
             with open(res_file, 'r') as f:
                 d = json.load(f)
                 if 'scores' in d.keys():
-                    length = f" time:{d['time']}" if 'time' in d.keys() else ""
-                    print(f'{dir:<100}: score:{np.mean(d["scores"]):.4f} std:{np.std(d["scores"]):.4f}{length}')
+                    print(f'{dir}: {np.mean(d["scores"]):.4f} {np.std(d["scores"]):.4f}')

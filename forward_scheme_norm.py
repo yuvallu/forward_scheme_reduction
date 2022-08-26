@@ -88,11 +88,6 @@ class Forward(torch.nn.Module):
 
         return x.cpu().detach().numpy()
 
-def check_corr_matrixs(model_A):
-    B = model_A.reshape(-1, 10000)
-    C = (B @ B.T).detach().numpy()
-    C[np.arange(63),np.arange(63)] = 0
-    return C
 
 def train(model, data3, epochs, batch_size, args_train={"percent_remove": 0, "num_epochs": 1, "tryout": False, "start_time": 0, "stop_n_restart": -1}, exp_name=""):
     # args_train["tryout"] = False  ############# -#

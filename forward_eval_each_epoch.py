@@ -155,6 +155,7 @@ def train(model, loader, epochs, split, mesures_df, i, classifier='SVM', s_time=
 
 
 def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=None):
+    time_to_ignore = 0  # time to not calculate in seconds (for code that is not necessary to tun for example)
     # -# depth is used here
     tuples = [r for _, r, _ in db.iter_rows(db.predict_rel)]
     scheme_tuple_map = db.scheme_tuple_map(db.predict_rel, tuples, depth)
@@ -564,6 +565,15 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     # f"low_loss_tryout_{data_name}_try_out_mul{mul_by}"
+    elif 'low_loss_yan81_' in yuval_change:  # lowest loss first
+        schemes_to_remove = int(yuval_change.split('low_loss_yan81_')[-1].split("_")[-1])
+        ordered_schemes_file_name = "_".join(yuval_change.split('low_loss_yan81_')[-1].split("_")[:-1])
+        with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
+            d = json.load(f)
+            ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
+            # TODO: if the lowest schemes have 0 loss dont remove them
+        subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
+
     elif 'low_loss_tryout_' in yuval_change:  # lowest loss first
         schemes_to_remove = int(yuval_change.split('low_loss_tryout_')[-1].split("_")[-1])
         ordered_schemes_file_name = "_".join(yuval_change.split('low_loss_tryout_')[-1].split("_")[:-1])
@@ -654,10 +664,12 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
                                 422, 74, 20, 50, 412, 134, 25, 17, 70, 47]
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'distribution_var_' in yuval_change:
+        #print(f"$2 {time.time()}")
         schemes_to_remove = int(yuval_change.split('distribution_var_')[-1])
         # ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
-        schema_ek_var = get_schema_variance(db, args.depth, args.num_samples, row_idx)
+        schema_ek_var, time_to_ignore = get_schema_variance(db, args.depth, args.num_samples, row_idx)
         ordered_schemes = {k: v for k, v in sorted(schema_ek_var.items(), key=lambda item: item[1])}
+        #print(f"$ordered schemes: {ordered_schemes}")
         if 'rev_' in yuval_change:
             subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][::-1][schemes_to_remove:]
         else:
@@ -665,6 +677,16 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
     # after second epoch when first zeroed = [22, 26, 48, 23, 61, 32, 20, 19, 54, 51, 18, 53, 56, 52, 62, 55, 30, 31, 25, 45, 21, 46, 28, 27, 17, 3, 24, 50, 47,
     #  2, 4, 49, 1, 0, 9, 11, 15, 5, 14, 29, 13, 8, 12, 6, 7, 10, 16, 36, 33, 37, 35, 34, 58, 57, 60, 59, 38, 43, 40, 42,
     #  41, 39, 44]
+    elif 'mutual_information_' in yuval_change:
+        schemes_to_remove = int(yuval_change.split('mutual_information_')[-1])
+        if "min_" in yuval_change:
+            ordered_schemes = entropy.sorted_dict_by_min_value_in_list(entropy.get_schemes_to_MI_dict_optimized(db, subset_full_schemes))
+        else:  # max
+            ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_MI_dict_optimized(db, subset_full_schemes))
+        if 'rev_' in yuval_change:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][::-1][schemes_to_remove:]  # 3 2 1 - removes max
+        else:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]  # 1 2 3 - removes min
     elif 'sorted_by_shuffle' in yuval_change:
         schemes_to_remove = int(yuval_change.split('sorted_by_shuffle')[-1].split('_')[-1])
         np.random.seed(int(yuval_change.split('sorted_by_shuffle')[-1].split('_')[0]))
@@ -688,8 +710,8 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
                         db.get_col_type(col_id)]
                     pairs, values = sample_fct(db, col_id, tuple_map, num_samples, col_kernel)
                     samples[full_scheme] = (pairs, values)
-
-    return samples
+    #print(f"$6 {time.time()}")
+    return samples, time_to_ignore
 
 
 def preproc_data(samples, model, batch_size):
@@ -735,6 +757,8 @@ def preproc_data_tryout(samples, model, batch_size):
 
 
 if __name__ == '__main__':
+    print(f"$1 {time.time()}")
+    n_avg = 5
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_name", type=str, default='genes', help="Name of the data base")
     parser.add_argument("--dim", type=int, default=100, help="Dimension of the embedding")
@@ -759,7 +783,7 @@ if __name__ == '__main__':
         start -= (pt.second + pt.minute * 60 + pt.hour * 3600)  # add in seconds
 
     mesures_df = pd.DataFrame(
-        columns=reduce(lambda xs, ys: xs + ys, [[f"Acc_{i}", f"Time_{i}", f"Steps_{i}"] for i in range(10)]))
+        columns=reduce(lambda xs, ys: xs + ys, [[f"Acc_{i}", f"Time_{i}", f"Steps_{i}"] for i in range(n_avg)]))
     mesures_df['epochs'] = [f"epoch_{e}" for e in range(1)]
     mesures_df.set_index('epochs', inplace=True)
 
@@ -781,11 +805,11 @@ if __name__ == '__main__':
     before_training_time = time.time() - start
 
     scores = []
-    n_splits = 10
-    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=n_splits)  # every run has the same splits
-    for i in range(n_splits):
+    split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)  # every run has the same splits
+    for i in range(n_avg):
         start = time.time() - before_training_time
-        samples = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change, row_idx)
+        samples, time_to_ignore = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change, row_idx)
+        start += time_to_ignore
         scheme_idx = {s: i for i, s in enumerate(samples.keys())}
         model = Forward(args.dim, len(samples), row_idx, scheme_idx)
 

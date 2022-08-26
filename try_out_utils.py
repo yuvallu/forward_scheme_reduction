@@ -13,69 +13,78 @@ from tqdm import tqdm
 import pandas as pd
 
 
-def yan81(db, schemes):
-    histogram_start_df = db.relations[db.predict_rel]  # [db.predict_col.split("@")[0]].to_frame()
+def yan81(db, schemes, mul_by):
+    histogram_start_df = db.relations[db.predict_rel].copy()  # [db.predict_col.split("@")[0]].to_frame()
+    # histogram_start_df.is_copy = False
     histogram_start_df['histogram'] = np.zeros(len(histogram_start_df))
-    histogram_start_df.is_copy = False
-    for scheme in tqdm(schemes):
-        if len(scheme.split("-")) == 1:  # scheme len is equal to 0 -> no edges -> no need to run Yan81
-            continue
-        start_col, start_rel = scheme.split("-")[0].split("@")
+    chosen_starting_tuples = []
+    small_df_size = len(histogram_start_df) * mul_by
+    while len(chosen_starting_tuples) < small_df_size:
+        for scheme in tqdm(schemes):
+            if len(scheme.split("-")) == 1:  # scheme len is equal to 0 -> no edges -> no need to run Yan81
+                continue
+            start_col, start_rel = scheme.split("-")[0].split("@")
 
-        join_cols = [sub.split(">")[0] for sub in scheme.split("-")][1:]
-        col_at_rels = [sub.split(">")[-1] for sub in scheme.split("-")]
-        for idx in range(len(col_at_rels) - 1, 0, -1):
-            # compute joined_df of from_rel JOIN to_rel
-            to_rel, from_rel = col_at_rels[idx], col_at_rels[idx - 1]
-            from_col, from_rel = from_rel.split("@")
-            to_col, to_rel = to_rel.split("@")
-            from_df, to_df = db.relations[from_rel], db.relations[to_rel] if idx == (len(col_at_rels) - 1) else left_joined_df
-            join_to_col = join_cols[idx-1].split("@")[0]
-            # compute the left semi join between from_df and to_df
-            semi_table = from_df.merge(to_df, left_on=from_col, right_on=join_to_col, how='inner', suffixes=('', '_to'))
-            # joined_df = from_df.merge(to_df, left_on=from_col, right_on=join_to_col, how='inner', suffixes=('_from', ''))  # inner join
-            in_both = from_df[from_col].isin(semi_table[from_col])
-            left_joined_df = from_df[in_both]
+            join_cols = [sub.split(">")[0] for sub in scheme.split("-")][1:]
+            col_at_rels = [sub.split(">")[-1] for sub in scheme.split("-")]
+            for idx in range(len(col_at_rels) - 1, 0, -1):
+                # compute joined_df of from_rel JOIN to_rel
+                to_rel, from_rel = col_at_rels[idx], col_at_rels[idx - 1]
+                from_col, from_rel = from_rel.split("@")
+                to_col, to_rel = to_rel.split("@")
+                from_df, to_df = db.relations[from_rel], db.relations[to_rel] if idx == (len(col_at_rels) - 1) else left_joined_df
+                join_to_col = join_cols[idx-1].split("@")[0]
+                # compute the left semi join between from_df and to_df
+                semi_table = from_df.merge(to_df, left_on=from_col, right_on=join_to_col, how='inner', suffixes=('', '_to'))
+                # joined_df = from_df.merge(to_df, left_on=from_col, right_on=join_to_col, how='inner', suffixes=('_from', ''))  # inner join
+                in_both = from_df[from_col].isin(semi_table[from_col])
+                left_joined_df = from_df[in_both]
 
-        for idx, row in histogram_start_df.iterrows():
-            if row[start_col] in left_joined_df[start_col].values:
-                # histogram_start_df['histogram'][idx] += 1
-                histogram_start_df.loc[idx, ('histogram')] += 1
-    histogram_start_df
+            potential_tuples = []
+            for idx, row in histogram_start_df.iterrows():
+                if row[start_col] in left_joined_df[start_col].values:
+                    # histogram_start_df['histogram'][idx] += 1
+                    # histogram_start_df.loc[idx, ('histogram')] += 1
+                    potential_tuples.append(idx)
+            if len(potential_tuples) > 0:
+                added_tuple = int(np.random.choice(potential_tuples, size=1))
+                chosen_starting_tuples.append(added_tuple)
+                histogram_start_df = histogram_start_df.drop(added_tuple)
+            if len(chosen_starting_tuples) >= small_df_size:
+                break
+    histogram_start_df = histogram_start_df.drop(['histogram'], axis=1)
+    return chosen_starting_tuples
 
-def run_yan81_on_schemes():
-    data_name = "mondial"
-    data_path = f'Datasets/{data_name}'
-    # load csv
-    db = Database.load_csv(data_path)
+def yan81_aux(db, depth, mul_by):
     tuples = [r for _, r, _ in db.iter_rows(db.predict_rel)]
-    depth = 3
     scheme_tuple_map = list(db.scheme_tuple_map(db.predict_rel, tuples, depth).keys())
-    # -# scheme ends in a column and not in a table.
     schemes = []
     for scheme in scheme_tuple_map:
         cur_rel = scheme.split(">")[-1]
         if len(db.rel_comp_cols[cur_rel]) > 0:
             for col_id in db.rel_comp_cols[cur_rel]:
                 schemes.append(f"{scheme}>{col_id}")
+    return yan81(db, schemes, mul_by)
 
-    yan81(db, schemes)
-
-def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3):
-    exp_name = f"try_out_mul{mul_by}"
+def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3, sort="loss"):
+    exp_name = f"yan81_mul{mul_by}"
     data_path = f'Datasets/{data_name}'
     db = Database.load_csv(data_path)
 
     # creat a small sample of the data
-    small_sample_data_name = f"{data_name}_small_sample_data_EXP_mul{mul_by}"
+    small_sample_data_name = f"{data_name}_small_Yan81_EXP_{mul_by}"
     small_sample_data_path = f'Datasets/{small_sample_data_name}'
     os.makedirs(small_sample_data_path, exist_ok=True)
-    shutil.copyfile(f'{data_path}/{data_name}_cols', f'{small_sample_data_path}/{data_name}_cols')
+    for fname in os.listdir(data_path):
+        if "cols" in fname:
+            shutil.copyfile(f'{data_path}/{fname}', f'{small_sample_data_path}/{data_name}_cols')
+            break
 
     # simple copy only first fifth
     for name, df in db.relations.items():
         if name == db.predict_rel:
-            df.sample(n=int(len(df) * mul_by), random_state=0).to_csv(f"{small_sample_data_path}/{db.predict_rel}.csv",index=False)
+            # df.sample(n=int(len(df) * mul_by), random_state=0).to_csv(f"{small_sample_data_path}/{db.predict_rel}.csv",index=False)
+            df.iloc[yan81_aux(db, depth, mul_by)].to_csv(f"{small_sample_data_path}/{db.predict_rel}.csv", index=False)
         else:
             df.to_csv(f"{small_sample_data_path}/{name}.csv", index=False)
 
@@ -88,7 +97,7 @@ def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3):
     if os.path.exists(temp_ordered_schemes_path):
         with open(temp_ordered_schemes_path, 'r') as f:
             d = json.load(f)
-            print("From tryout - ordered schemes from lowest loss to highest loss:")
+            print("From yan81 tryout - ordered schemes from lowest loss to highest loss:")
             print(d)
     print(f"\nTime:{str(output.split(b'Time:')[-1])[:-1]}")
 
@@ -170,16 +179,15 @@ def stop_n_restart(epoch=1, data_name="mondial", num_samples=0, depth=3, sort="l
     print(f"\nTime:{str(output.split(b'Time:')[-1])[:-1]}")
 
 if __name__ == '__main__':
-    # run_yan81_on_schemes()
+    # tryout_yan81(0.4, data_name="mondial", num_samples=0, depth=3)
     # exit()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_name", type=str, default="mondial", help="dataset name")
     parser.add_argument("--depth", type=int, default=3, help="Depth of the walks")
 
     parser.add_argument("--mul_by", type=float, default=0.5, help="mul_by number to reduce database")
     parser.add_argument("--method", type=str, default="tryout",
-                        help="Partial Training method (tryout or stop_n_restart)")
+                        help="Partial Training method (tryout or stop_n_restart or yan81)")
     parser.add_argument("--num_samples", type=int, default=0, help="num_samples in tryout")  # 0 is default num_samples
 
     parser.add_argument("--epoch", type=int, default=1, help="stop_n_restart epoch to stop")
@@ -190,3 +198,5 @@ if __name__ == '__main__':
         tryout_mul_db(mul_by=args.mul_by, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)
     elif args.method == "stop_n_restart":
         stop_n_restart(epoch=args.epoch, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)
+    elif args.method == "yan81":
+        tryout_yan81(mul_by=args.mul_by, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)

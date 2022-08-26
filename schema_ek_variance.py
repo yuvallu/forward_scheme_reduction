@@ -5,6 +5,7 @@ from tqdm import tqdm
 import argparse
 from db_utils import Database
 import ek_utlis
+import time
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -68,12 +69,20 @@ def samples_to_variance(samples, row_idx, schema_idx):
 
 
 def get_schema_variance(db, depth, num_samples, row_idx):
-    samples = get_samples(db, depth, num_samples, ek_utlis.ek_sample_fct)
+    # import torch
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # print(device.type)
+    # print(f"$3 {time.time()}")
+    time_to_ignore = time.time()
+    samples = get_samples(db, depth, int(num_samples/10), ek_utlis.ek_sample_fct)
+    time_to_ignore = time.time() - time_to_ignore
+    # print(f"$4 {time.time()}")
     schema_idx = {s: i for i, s in enumerate(samples.keys())}
     schema_ek_var = samples_to_variance(samples, row_idx, schema_idx)
     schema_ek_var = schema_ek_var.numpy()
     schema_ek_var = {schema: schema_ek_var[i] for schema, i in schema_idx.items()}
-    return schema_ek_var
+    # print(f"$5 {time.time()}")
+    return schema_ek_var, time_to_ignore
 
 
 if __name__ == '__main__':
