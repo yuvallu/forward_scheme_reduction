@@ -66,7 +66,7 @@ def yan81_aux(db, depth, mul_by):
                 schemes.append(f"{scheme}>{col_id}")
     return yan81(db, schemes, mul_by)
 
-def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3, sort="loss"):
+def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3, sort="loss", seed=0):
     exp_name = f"yan81_mul{mul_by}"
     data_path = f'Datasets/{data_name}'
     db = Database.load_csv(data_path)
@@ -91,7 +91,7 @@ def tryout_yan81(mul_by, data_name="mondial", num_samples=0, depth=3, sort="loss
     # TODO: num_samples is usually 500
     num_samples_str = f"--num_samples {num_samples}" if num_samples != 0 else ""
     output = subprocess.check_output(
-        f"python forward_split_Loss_per_scheme.py --data_name {small_sample_data_name} --yuval_change {data_name}_{exp_name} --tryout True --depth {depth} {num_samples_str}".split())
+        f"python forward_split_Loss_per_scheme.py --data_name {small_sample_data_name} --yuval_change {data_name}_{exp_name} --tryout True --depth {depth} --seed {seed} {num_samples_str}".split())
     # now the ordered schemes are in "Sorted_schemes\temp_ordered_schemes.txt"
     temp_ordered_schemes_path = os.path.join("Sorted_schemes", f"{data_name}_{exp_name}.txt")
     if os.path.exists(temp_ordered_schemes_path):
@@ -163,11 +163,11 @@ def tryout_mul_db(mul_by, data_name="mondial", num_samples=0, depth=3, sort="los
     print(f"\nTime:{str(output.split(b'Time:')[-1])[:-1]}")
 
 
-def stop_n_restart(epoch=1, data_name="mondial", num_samples=0, depth=3, sort="loss"):
+def stop_n_restart(epoch=1, data_name="mondial", num_samples=0, depth=3, sort="loss", seed=0):
     exp_name = f"stop_n_restart{epoch}"
     num_samples_str = f"--num_samples {num_samples}" if num_samples != 0 else ""
     sorting_file = "forward_split_Loss_per_scheme" if sort == "loss" else "forward_scheme_norm"
-    output = subprocess.check_output(f"python {sorting_file}.py --data_name {data_name} --yuval_change {data_name}_{exp_name} --tryout True --depth {depth} --stop_n_restart {epoch} {num_samples_str}".split())
+    output = subprocess.check_output(f"python {sorting_file}.py --data_name {data_name} --yuval_change {data_name}_{exp_name} --tryout True --depth {depth} --stop_n_restart {epoch} --seed {seed} {num_samples_str}".split())
     # now the ordered schemes are in "Sorted_schemes\temp_ordered_schemes.txt"
     temp_ordered_schemes_path = os.path.join("Sorted_schemes", f"{data_name}_{exp_name}.txt")
     if os.path.exists(temp_ordered_schemes_path):
@@ -184,6 +184,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_name", type=str, default="mondial", help="dataset name")
     parser.add_argument("--depth", type=int, default=3, help="Depth of the walks")
+    parser.add_argument("--seed", type=int, default=0, help="Random Seed")
 
     parser.add_argument("--mul_by", type=float, default=0.5, help="mul_by number to reduce database")
     parser.add_argument("--method", type=str, default="tryout",
@@ -193,10 +194,11 @@ if __name__ == '__main__':
     parser.add_argument("--epoch", type=int, default=1, help="stop_n_restart epoch to stop")
     parser.add_argument("--sorting_method", type=str, default="loss", help="loss or norm")
     args = parser.parse_args()
+    np.random.seed(args.seed)
 
     if args.method == "tryout":
         tryout_mul_db(mul_by=args.mul_by, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)
     elif args.method == "stop_n_restart":
-        stop_n_restart(epoch=args.epoch, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)
+        stop_n_restart(epoch=args.epoch, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method, seed=args.seed)
     elif args.method == "yan81":
-        tryout_yan81(mul_by=args.mul_by, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method)
+        tryout_yan81(mul_by=args.mul_by, data_name=args.data_name, num_samples=args.num_samples, depth=args.depth, sort=args.sorting_method, seed=args.seed)

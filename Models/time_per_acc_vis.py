@@ -9,6 +9,72 @@ import os
 INCLUDE_PREPROCESSING = True
 DO_KVAR_MODIFICATION = False
 FINAL_EXP_NUM = 3
+BASELINE = 0.95
+###############################################################
+def check_all_dirs_pass_threshold(dirs, exp_name, data_name=""):
+    """
+    :return: dict from each exp name (dir) to its t (time to reach a*  or -1 if never reached)
+    """
+    ts, baseline = {}, 0  # placeholder
+    try:
+        dirs.sort(key=lambda exp: int(exp.split("_")[-1]))
+    except ValueError as ve:
+        dirs.sort(key=lambda exp: exp.split(exp_name + "_")[-1])
+    if "dynamic" not in exp_name:  # add the regular forward run
+        if len([d for d in dirs if
+                int(d.split(exp_name + '_')[-1].split('_')[-1]) == 0]) == 0:  # add blank exp to show the original F run
+            dirs = [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'] + dirs
+    else:  # "dynamic" in exp_name
+        if len([d for d in dirs if d.split(exp_name + '_')[-1] == "0%in_1_ep"]) == 0:
+            dirs = [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'] + dirs
+    for i, d in enumerate(dirs):
+        if "dynamic" not in d:
+            num_schemes_removed = int(d.split(exp_name + '_')[-1].split('_')[-1])
+            label = f"{num_schemes_removed_to_percentage(data_name, num_schemes_removed)}"
+            if int(d.split(exp_name + '_')[-1].split('_')[-1]) == 0:  # if regular forward
+                d, label = d.split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0', "100%"
+        else:
+            label = d.split(exp_name + '_')[-1]
+            if label == "0%in_1_ep":  # if regular forward
+                d, label = d.split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0', "100%"
+        mesures_df = pd.read_csv(winapi_path(f'{d}/mesures.csv'))
+        n_avg = int(len(mesures_df.columns) / 3)
+        if not INCLUDE_PREPROCESSING:
+            # remove the preprocessing time
+            mesures_df = remove_preprocessing_time(mesures_df, n_avg)
+        elif label != "100%":
+            if "conditional_entropy" in exp_name and data_name != "mutagenesis":
+                mesures_df = entropy_fix(mesures_df, n_avg)
+            elif DO_KVAR_MODIFICATION and "distribution_var" in exp_name:
+                mesures_df = k_var_fix(mesures_df, n_avg)
+        for col in mesures_df.columns:
+            mesures_df[col] = mesures_df[col][:int(BASELINE * len(mesures_df[col]))]
+
+        all_times = mesures_df[[f'Time_{i}' for i in range(n_avg)]]
+        all_epochs = mesures_df[[f'Acc_{i}' for i in range(n_avg)]]
+
+        time_per_epoch = list(mesures_df[[f'Time_{i}' for i in range(n_avg)]].mean(axis=1))
+        acc_per_epoch = list(mesures_df[[f'Acc_{i}' for i in range(n_avg)]].mean(axis=1))
+        if label == "100%":
+            baseline = BASELINE * [v for v in acc_per_epoch if not np.isnan(v)][-1]
+            continue
+
+        all_t_across_runs = []
+        for i in range(n_avg):
+            t = math.inf
+            for idx, acc in enumerate(all_epochs[f'Acc_{i}']):
+                if acc >= baseline:
+                    t = all_times[f'Time_{i}'][idx]
+                    break
+            all_t_across_runs += [t]
+        ts[d] = all_t_across_runs
+        # for idx, acc in enumerate(acc_per_epoch):
+        #     if acc >= baseline:
+        #         t = time_per_epoch[idx]
+        #         break
+        # ts[d] = t
+    return ts
+###############################################################
 
 def winapi_path(dos_path, encoding=None):
     if (not isinstance(dos_path, str) and encoding is not None):
@@ -32,6 +98,8 @@ data_name_to_depth = {"mutagenesis": 4, "world": 3, "hepatitis": 3, "genes": 3, 
                           "mondial_target_Inflation_g6": 3, "mondial_original_target": 3}
 data_name_shortcut = {"mutagenesis": "mutagenesis", "world": "world", "world_B": "world", "hepatitis": "hepatitis", "genes": "genes", "mondial_target_infant_mortality_g40": "mondial infant-mortality","mondial_target_continent": "mondial continent", "mondial_target_GDP_g8e3": "mondial GDP","mondial_target_Inflation_g6": "mondial inflation", "mondial_original_target": "mondial religion","final_exps2\mutagenesis": "mutagenesis", "final_exps2\world": "world", "final_exps2\world_B": "world", "final_exps2\hepatitis": "hepatitis","final_exps2\genes": "genes","final_exps2\mondial_target_infant_mortality_g40": "mondial infant-mortality","final_exps2\mondial_target_continent": "mondial continent", "final_exps2\mondial_target_GDP_g8e3": "mondial GDP","final_exps2\mondial_target_Inflation_g6": "mondial inflation", "final_exps2\mondial_original_target": "mondial religion"
                       ,"final_exps3\mutagenesis": "mutagenesis", "final_exps3\world": "world", "final_exps3\world_B": "world", "final_exps3\hepatitis": "hepatitis","final_exps3\genes": "genes","final_exps3\mondial_target_infant_mortality_g40": "mondial infant-mortality","final_exps3\mondial_target_continent": "mondial continent", "final_exps3\mondial_target_GDP_g8e3": "mondial GDP","final_exps3\mondial_target_Inflation_g6": "mondial inflation", "final_exps3\mondial_original_target": "mondial religion"}
+exp_to_colors = {"random":'cyan', "len":'yellow', "k_var":'red', "1ep":'green', "ent":'pink', "sampling":'blue', "MI":'pink', "dynamic":'lime', "aseline":'gray'}
+
 def exp_to_title(data_name, exp_name, short_title=True, seperator=" "):
     prefix = data_name_shortcut[data_name]
     if short_title:
@@ -93,11 +161,11 @@ def get_mesures_from_dirs(dirs, exp_name, data_name=""):
     except ValueError as ve:
         dirs.sort(key=lambda exp: exp.split(exp_name+"_")[-1])
     if len([d for d in dirs if int(d.split(exp_name+'_')[-1]) == 0]) == 0:  # add blank exp to show the original F run
-        dirs += dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'
+        dirs += [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0']
 
-    for i,(d, c) in list(enumerate(zip(dirs, colors)))[::-1]:
-        label = f"{num_schemes_removed_to_percentage(data_name, int(d.split(exp_name + '_')[-1]))}"
-        if int(d.split(exp_name+'_')[-1]) == 0:  # if regular forward
+    for i,(d, c) in list(enumerate(zip(dirs, np.concatenate((colors, colors[:1])))))[::-1]:  # zip(dirs, colors)
+        label = f"{num_schemes_removed_to_percentage(data_name, int(d.split('_')[-1]))}"
+        if int(d.split('_')[-1]) == 0:  # if regular forward
             d, label, c = d.split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0', "100%", "gray"
         # if i!= 0 and i != len(dirs)-2:
         #     continue
@@ -113,7 +181,7 @@ def get_mesures_from_dirs(dirs, exp_name, data_name=""):
             elif DO_KVAR_MODIFICATION and "distribution_var" in exp_name:
                 mesures_df = k_var_fix(mesures_df, n_avg)
         for col in mesures_df.columns:
-            mesures_df[col] = mesures_df[col][:int(0.95*len(mesures_df[col]))]
+            mesures_df[col] = mesures_df[col][:int(BASELINE*len(mesures_df[col]))]
 
         time_per_epoch = list(mesures_df[[f'Time_{i}' for i in range(n_avg)]].mean(axis=1))
         ###
@@ -123,7 +191,7 @@ def get_mesures_from_dirs(dirs, exp_name, data_name=""):
         acc_per_epoch = list(mesures_df[[f'Acc_{i}' for i in range(n_avg)]].mean(axis=1))
         if label == "100%":
             # baseline
-            baseline_txt, baseline = "a", 0.95 * 100 * [v for v in acc_per_epoch if not np.isnan(v)][-1]  # "majority" if label == 'Accuracy' else "regular run"
+            baseline_txt, baseline = "a", BASELINE * 100 * [v for v in acc_per_epoch if not np.isnan(v)][-1]  # "majority" if label == 'Accuracy' else "regular run"
             plt.axhline(y=baseline, color='r', linestyle='--', label=f"baseline ({baseline_txt})")
         plt.plot(time_per_epoch, [acc*100 for acc in acc_per_epoch], color=c, linestyle='dashed', linewidth=1 if label != "100%" else 4,  #[acc*100 for acc in acc_per_epoch]
                  marker='o', markerfacecolor=c, markersize=2 if label != "100%" else 6, label=label)
@@ -152,7 +220,7 @@ def acc_per_time_visualization():
     # for data_name in ["mondial_original_target"]:
     for data_name in data_names:  # data_names:  # ["mondial_original_target", "hepatitis", "genes", "mutagenesis", "mondial_target_GDP_g8e3", "world_B", "mondial_target_infant_mortality_g40"]:
         # for exp in ["999_50000_0experiment_distribution_var"]:
-        for exp in ["distribution_var", "sorted_by_shuffle42"]:  # ["yan81_mul0.33"]:  # exps:  # ["distribution_var", "conditional_entropy_from_low_to_high_removed", "stop_n_restart1"] ["min_mutual_information", "rev_min_mutual_information", "max_mutual_information", "rev_max_mutual_information"]
+        for exp in ["rev_min_mutual_information"]:  # ["distribution_var", "sorted_by_shuffle42"]:  # ["yan81_mul0.33"]:  # exps:  # ["distribution_var", "conditional_entropy_from_low_to_high_removed", "stop_n_restart1"] ["min_mutual_information", "rev_min_mutual_information", "max_mutual_information", "rev_max_mutual_information"]
         # for exp in ["999_50000_0experiment_dynamic"]:
             # display_acc_per_time(f"final_exps{FINAL_EXP_NUM}\{data_name}", f"experiment_{exp}")
             display_acc_per_time(f"final_exps{FINAL_EXP_NUM}\{data_name}", exp)
@@ -167,9 +235,12 @@ def get_ts_from_dirs(dirs, exp_name, data_name=""):
         dirs.sort(key=lambda exp: int(exp.split("_")[-1]))
     except ValueError as ve:
         dirs.sort(key=lambda exp: exp.split(exp_name+"_")[-1])
-    if len([d for d in dirs if int(d.split(exp_name+'_')[-1]) == 0]) == 0:  # add blank exp to show the original F run
-        dirs = [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'] + dirs
-
+    if "dynamic" not in exp_name:  # add the regular forward run
+        if len([d for d in dirs if int(d.split(exp_name+'_')[-1]) == 0]) == 0:  # add blank exp to show the original F run
+            dirs = [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'] + dirs
+    else:  # "dynamic" in exp_name
+        if len([d for d in dirs if d.split(exp_name + '_')[-1] == "0%in_1_ep"]) == 0:
+            dirs = [dirs[0].split('experiment_')[0] + 'experiment_sorted_by_shuffle42_0'] + dirs
     for i, d in enumerate(dirs):
         if "dynamic" not in d:
             num_schemes_removed = int(d.split(exp_name + '_')[-1].split('_')[-1])
@@ -191,12 +262,12 @@ def get_ts_from_dirs(dirs, exp_name, data_name=""):
             elif DO_KVAR_MODIFICATION and "distribution_var" in exp_name:
                 mesures_df = k_var_fix(mesures_df, n_avg)
         for col in mesures_df.columns:
-            mesures_df[col] = mesures_df[col][:int(0.95*len(mesures_df[col]))]
+            mesures_df[col] = mesures_df[col][:int(BASELINE*len(mesures_df[col]))]
 
         time_per_epoch = list(mesures_df[[f'Time_{i}' for i in range(n_avg)]].mean(axis=1))
         acc_per_epoch = list(mesures_df[[f'Acc_{i}' for i in range(n_avg)]].mean(axis=1))
         if label == "100%":
-            baseline = 0.95 * [v for v in acc_per_epoch if not np.isnan(v)][-1]
+            baseline = BASELINE * [v for v in acc_per_epoch if not np.isnan(v)][-1]
             continue
 
         t= math.inf
@@ -221,11 +292,28 @@ def compare_sr_strategies():
     task_exps_dict = {}
     for data_name in data_names:  #["mondial_target_infant_mortality_g40"]:  # data_names:  # ["mondial_original_target", "hepatitis", "genes", "mutagenesis", "mondial_target_GDP_g8e3", "world_B"]:
         exps_dict = {}
-        for exp in ["distribution_var", "sorted_by_shuffle42", "stop_n_restart1", "yan81_mul0.33", "remove_longest_schemes"]:  #["distribution_var", "sorted_by_shuffle42"]:  # exps:  # ["distribution_var", "conditional_entropy_from_low_to_high_removed", "stop_n_restart1","dynamic"]
+        for exp in ["distribution_var", "sorted_by_shuffle42", "stop_n_restart1", "yan81_mul0.33", "remove_longest_schemes", "dynamic"]:  #["distribution_var", "sorted_by_shuffle42"]:  # exps:  # ["distribution_var", "conditional_entropy_from_low_to_high_removed", "stop_n_restart1","dynamic"]
             d, t = get_t_star(f"final_exps{FINAL_EXP_NUM}\{data_name}", exp)
             exps_dict[exp_to_title(data_name, exp)] = {"t_star":t, "dir":d}
         task_exps_dict[data_name] = {k: v for k, v in sorted(exps_dict.items(), key=lambda item: item[1]["t_star"])}
 
+    ### across all the runs
+    print(f"######################")
+    all_t_task_exps_dict = {}  # same with all t across all the runs
+    for data_name in data_names:
+        t_s = task_exps_dict[data_name]
+        all_t_exps_dict = {}
+        for exp in t_s.keys():
+            baseline = f'final_exps{FINAL_EXP_NUM}/{data_name}/EK_{data_name_to_depth[data_name]}_100_500_999_50000_0experiment_sorted_by_shuffle42_0'
+            ddd = check_all_dirs_pass_threshold([baseline, t_s[exp]['dir']], exp, data_name=data_name)
+            all_t_exps_dict[exp_to_title(data_name, exp)] = ddd
+        all_t_task_exps_dict[data_name] = all_t_exps_dict.copy()
+    for data_name, all_t_exps_dict in all_t_task_exps_dict.items():
+        for exp, all_t_s in all_t_exps_dict.items():
+            for t in all_t_s:
+                print(f'{data_name + " " + exp:<50}: score:{np.mean(list(all_t_s.values())[0]):.4f} std:{np.std(list(all_t_s.values())[0]):.4f}')
+                if t == math.inf:
+                    print(f"in {data_name} using {exp} we got {all_t_s}")
     # solutions:
     #  run another random
     #  ignor the preprocessing time
@@ -235,7 +323,8 @@ def compare_sr_strategies():
         winer_exp = min(t_s, key=lambda x: t_s[x]["t_star"])
         print(f"For data_name {data_name:<35}, the winner is exp {winer_exp:<25} with t={t_s[winer_exp]['t_star']:5f} and dir={t_s[winer_exp]['dir']}")
 
-    winners_table_df = pd.DataFrame.from_dict({data_name_shortcut[k]: {kk:vv["t_star"] for kk,vv in v.items()} for k,v in task_exps_dict.items()})
+    winners_table_df = pd.DataFrame.from_dict({data_name_shortcut[k]: {kk:f'{vv["t_star"]:.2f} (+-{np.std(list(all_t_task_exps_dict[k][" " + kk].values())[0]):.2f})' for kk,vv in v.items()} for k,v in task_exps_dict.items()})
+    # winners_table_df = pd.DataFrame.from_dict({data_name_shortcut[k]: {kk:vv["t_star"] for kk,vv in v.items()} for k,v in task_exps_dict.items()})
     winners_table_df.to_csv("temp_winners_table.csv")
 
     ##
@@ -245,6 +334,7 @@ def compare_sr_strategies():
         colors = cm.jet(np.linspace(0, 1, len(t_s)))
         for i, (exp, c) in enumerate(zip(sorted(list(t_s.keys())), colors)):
             d = t_s[exp]["dir"]
+            c=exp_to_colors[exp[1:]]  # chang to more meaningful colors
             mesures_df = pd.read_csv(winapi_path(f'{d}/mesures.csv'))
             n_avg = int(len(mesures_df.columns) / 3)
             if not INCLUDE_PREPROCESSING:
@@ -256,12 +346,15 @@ def compare_sr_strategies():
                 elif DO_KVAR_MODIFICATION and "distribution_var" in exp:
                     mesures_df = k_var_fix(mesures_df, n_avg)
             for col in mesures_df.columns:
-                mesures_df[col] = mesures_df[col][:int(0.95 * len(mesures_df[col]))]
+                mesures_df[col] = mesures_df[col][:int(BASELINE * len(mesures_df[col]))]
             time_per_epoch = list(mesures_df[[f'Time_{i}' for i in range(n_avg)]].mean(axis=1))
             acc_per_epoch = list(mesures_df[[f'Acc_{i}' for i in range(n_avg)]].mean(axis=1))
             plt.plot(time_per_epoch, [acc * 100 for acc in acc_per_epoch], color=c if exp != "baseline" else "gray",
                      linestyle='dashed', linewidth=1 if exp != "baseline" else 4,
                      marker='o', markerfacecolor=c if exp != "baseline" else "gray", markersize=2 if exp != "baseline" else 6, label=exp_to_title(data_name, exp, short_title=True, seperator=""))
+            if exp == "baseline":
+                baseline_txt, baseline = "a", BASELINE * 100 * [v for v in acc_per_epoch if not np.isnan(v)][-1]  # "majority" if label == 'Accuracy' else "regular run"
+                plt.axhline(y=baseline, color='r', linestyle='--', label=f"baseline ({baseline_txt})")
         plt.legend()
         plt.tight_layout()
         plt.xticks(fontsize=26)

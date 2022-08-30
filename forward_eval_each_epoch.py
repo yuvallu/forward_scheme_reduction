@@ -26,6 +26,7 @@ from datetime import datetime
 import pandas as pd
 from functools import reduce
 from schema_ek_variance import get_schema_variance
+import subprocess
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -379,7 +380,9 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
         subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][scheme_to_remain:scheme_to_remain + 1]
     elif 'remove_longest_schemes_' in yuval_change:
         scheme_to_remove = int(yuval_change.split('remove_longest_schemes_')[-1])
-        ordered_schemes = sorted([(len(scheme.split("-")), scheme) for scheme in subset_full_schemes], reverse=True)
+        np.random.shuffle(subset_full_schemes)
+        # ordered_schemes = sorted([(len(scheme.split("-")), scheme) for scheme in subset_full_schemes], reverse=True)  # without randomness
+        ordered_schemes = sorted([(len(scheme.split("-")), scheme) for scheme in subset_full_schemes], reverse=True, key=lambda x: len(x[1].split("-")))
         subset_full_schemes = [scheme for l, scheme in ordered_schemes][scheme_to_remove:]
     elif 'Randomly_42seed_remove_schemes_' in yuval_change:
         scheme_to_remove = int(yuval_change.split('Randomly_42seed_remove_schemes_')[-1])
@@ -566,12 +569,14 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
 
     # f"low_loss_tryout_{data_name}_try_out_mul{mul_by}"
     elif 'low_loss_yan81_' in yuval_change:  # lowest loss first
+        time_to_ignore = time.time()
+        subprocess.check_output(f"python try_out_utils.py --method yan81 --mul_by {0.33} --data_name {args.data_name} --num_samples 100 --depth {depth} --seed {np.random.get_state()[1][0]}".split())
+        time_to_ignore = time.time() - time_to_ignore
         schemes_to_remove = int(yuval_change.split('low_loss_yan81_')[-1].split("_")[-1])
         ordered_schemes_file_name = "_".join(yuval_change.split('low_loss_yan81_')[-1].split("_")[:-1])
         with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
             d = json.load(f)
             ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
-            # TODO: if the lowest schemes have 0 loss dont remove them
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     elif 'low_loss_tryout_' in yuval_change:  # lowest loss first
@@ -580,7 +585,6 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
         with open(os.path.join("Sorted_schemes", f"{ordered_schemes_file_name}.txt"), 'r') as f:
             d = json.load(f)
             ordered_schemes_idxs, ordered_schemes_dict = d['Ordered_schemes'], d['Dict']
-            # TODO: if the lowest schemes have 0 loss dont remove them
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
 
     elif 'sorted_mean_lowest_loss_after_tryout_' in yuval_change:  # lowest loss first
@@ -593,6 +597,10 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
             # TODO: if the lowest schemes have 0 loss dont remove them
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
     elif 'sorted_mean_lowest_loss_after_SnR_' in yuval_change:
+        time_to_ignore = time.time()
+        try_out_time_str = subprocess.check_output(
+            f"python try_out_utils.py --depth {depth} --data_name {args.data_name} --method stop_n_restart --epoch {1} --seed {np.random.get_state()[1][0]}".split())
+        time_to_ignore = time.time() - time_to_ignore
         schemes_to_remove = int(yuval_change.split('sorted_mean_lowest_loss_after_SnR_')[-1].split("_")[-1])
         ordered_schemes_file_name = "_".join(
             yuval_change.split('sorted_mean_lowest_loss_after_SnR_')[-1].split("_")[:-1])
@@ -701,7 +709,7 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
             subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]  # 1 2 3 - removes min
     elif 'sorted_by_shuffle' in yuval_change:
         schemes_to_remove = int(yuval_change.split('sorted_by_shuffle')[-1].split('_')[-1])
-        np.random.seed(int(yuval_change.split('sorted_by_shuffle')[-1].split('_')[0]))
+        # np.random.seed(int(yuval_change.split('sorted_by_shuffle')[-1].split('_')[0]))
         ordered_schemes_idxs = list(range(len(subset_full_schemes)))
         np.random.shuffle(ordered_schemes_idxs)
         subset_full_schemes = [subset_full_schemes[idx] for idx in ordered_schemes_idxs][schemes_to_remove:]
@@ -710,6 +718,12 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
     #                        [list(scheme_tuple_map.keys())[idx] for idx in [int(yuval_change[8:])]]}
     print(f'subset_full_schemes: \n{subset_full_schemes}')
     # -#
+
+    if args.export_schemes:
+        temp_ordered_schemes_path = os.path.join("Sorted_schemes", model_dir.replace("/","_"))  # f"{data_name}_{exp_name}.txt")
+        with open(temp_ordered_schemes_path, 'w') as f:
+            json.dump(dict(enumerate(subset_full_schemes)), f, indent=4)
+        exit()
 
     samples = {}
     for scheme, tuple_map in tqdm(scheme_tuple_map.items()):
@@ -769,7 +783,7 @@ def preproc_data_tryout(samples, model, batch_size):
 
 
 if __name__ == '__main__':
-    print(f"$1 {time.time()}")
+    # print(f"$1 {time.time()}")
     n_avg = 5
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_name", type=str, default='genes', help="Name of the data base")
@@ -785,6 +799,7 @@ if __name__ == '__main__':
     parser.add_argument("--tryout", type=bool, default=False, help="Is tryout experiment")
     parser.add_argument("--pre_time", type=str, default='', help="pre processing time in str format")
     parser.add_argument("--threshold", type=int, default=-1, help="threshold for running the algorithm for threshold seconds (regardless the epochs)")
+    parser.add_argument("--export_schemes", type=bool, default=False, help="Export schemes to a yaml file")
     args = parser.parse_args()
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -819,6 +834,8 @@ if __name__ == '__main__':
     scores = []
     split = StratifiedShuffleSplit(train_size=0.9, random_state=0, n_splits=10)  # every run has the same splits
     for i in range(n_avg):
+        np.random.seed(args.seed+i)  # seeding a different seed in each run
+        torch.manual_seed(args.seed+i)  # seeding a different seed in each run
         start = time.time() - before_training_time
         samples, time_to_ignore = get_samples(db, args.depth, args.num_samples, sample_fct, args.yuval_change, row_idx)
         start += time_to_ignore
