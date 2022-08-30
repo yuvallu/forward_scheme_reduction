@@ -61,12 +61,12 @@ if __name__ == '__main__':
     #                 f"python forward_eval_each_epoch.py --data_name {data_name} --depth {depth} --yuval_change {task}_{i} --tryout True --epoch 999 --threshold {total_time}".split())
     # exit()
     #####################################################################################
-    shuffle_dict = {"mutagenesis": [0,52], "hepatitis": [0,4], "genes": [0,24],  #"mondial_target_infant_mortality_g40": [0,48],
+    shuffle_dict = {"mutagenesis": [0,52], "hepatitis": [0,4], "genes": [0,24],  "mondial_target_infant_mortality_g40": [0,48],
                                 "mondial_target_continent": [0,48], "mondial_target_GDP_g8e3": [0,48],
                                 "mondial_target_Inflation_g6": [0,36], "mondial_original_target": [0,40], "world_B": [0,36]}
-    k_var_dict = {"mutagenesis": [48,44], "hepatitis": [12,8], "genes": [20,16], #"mondial_target_infant_mortality_g40": [52],
-                                "mondial_target_continent": [52,48], "mondial_target_GDP_g8e3": [44,48],
-                                "mondial_target_Inflation_g6": [44,48], "mondial_original_target": [44,48], "world_B": [44,40]}
+    k_var_dict = {"mutagenesis": [48,44,20], "hepatitis": [12,8], "genes": [20,16,24], "mondial_target_infant_mortality_g40": [52,48],
+                                "mondial_target_continent": [52,48], "mondial_target_GDP_g8e3": [44,48,36],
+                                "mondial_target_Inflation_g6": [44,48,52], "mondial_original_target": [44,48], "world_B": [44,40]}
     len_dict = {"mutagenesis": [48], "hepatitis": [4], "genes": [20], "mondial_target_infant_mortality_g40": [16],
                   "mondial_target_continent": [20], "mondial_target_GDP_g8e3": [4],
                   "mondial_target_Inflation_g6": [12], "mondial_original_target": [20], "world_B": [48]}
@@ -77,29 +77,39 @@ if __name__ == '__main__':
                                 "mondial_target_continent": [32,28], "mondial_target_GDP_g8e3": [44,40],
                                 "mondial_target_Inflation_g6": [4,44,48], "mondial_original_target": [36,32], "world_B": [44,40]}
 
-    # Run online scheme reduction
-    write_log(f"Starting task - dynamic - online scheme reduction")
-    for data_name in data_names:
-        set_backtrack_to(data_name_to_is_backtrack[data_name])
-        write_log(f"    Starting data_name {data_name}")
-        depth, total_time = data_name_to_depth[data_name], data_name_to_total_time[data_name]
-        for exp in ["dynamic"]:
-            for percentage, num_epochs in [(66, 2), (85, 4), (95, 7)]:  # (0,1)
-                write_log(f"        {(percentage, num_epochs)}", backslash=" ")
-                subprocess.run(f"python forward_split_Loss_per_scheme_acc_each_epoch.py --data_name {data_name} --yuval_change {exp}_{percentage}%in_{num_epochs}_ep --train {percentage}%{num_epochs} --depth {depth} --epoch 999 --threshold {total_time}".split())
-        write_log(f"")
+    # # Run online scheme reduction
+    # write_log(f"Starting task - dynamic - online scheme reduction")
+    # for data_name in data_names:
+    #     set_backtrack_to(data_name_to_is_backtrack[data_name])
+    #     write_log(f"    Starting data_name {data_name}")
+    #     depth, total_time = data_name_to_depth[data_name], data_name_to_total_time[data_name]
+    #     for exp in ["dynamic"]:
+    #         for percentage, num_epochs in [(66, 2), (85, 4), (95, 7)]:  # (0,1)
+    #             write_log(f"        {(percentage, num_epochs)}", backslash=" ")
+    #             subprocess.run(f"python forward_split_Loss_per_scheme_acc_each_epoch.py --data_name {data_name} --yuval_change {exp}_{percentage}%in_{num_epochs}_ep --train {percentage}%{num_epochs} --depth {depth} --epoch 999 --threshold {total_time}".split())
+    #     write_log(f"")
 
-    tasks = ["rev_min_mutual_information"]
+    # tasks = ["rev_min_mutual_information"]
+    # for task in tasks:
+    #     write_log(f"Starting task {task}")
+    #     for data_name in data_names[::-1]:
+    #         write_log(f"    Starting data_name {data_name}")
+    #         set_backtrack_to(data_name_to_is_backtrack[data_name])
+    #         num_schemes, depth, total_time = data_name_to_num_schemes[data_name], data_name_to_depth[data_name], data_name_to_total_time[data_name]
+    #         for i in range(4, num_schemes, 4):
+    #             write_log(f"        {i}", backslash=" ")
+    #             subprocess.run(f"python forward_eval_each_epoch.py --data_name {data_name} --depth {depth} --yuval_change {task}_{i} --tryout True --epoch 999 --threshold {total_time}".split())
+    #         write_log(f"")
+    tasks = ["distribution_v"]
     for task in tasks:
         write_log(f"Starting task {task}")
-        for data_name in data_names[::-1]:
-            write_log(f"    Starting data_name {data_name}")
-            set_backtrack_to(data_name_to_is_backtrack[data_name])
-            num_schemes, depth, total_time = data_name_to_num_schemes[data_name], data_name_to_depth[data_name], data_name_to_total_time[data_name]
-            for i in range(4, num_schemes, 4):
-                write_log(f"        {i}", backslash=" ")
-                subprocess.run(f"python forward_eval_each_epoch.py --data_name {data_name} --depth {depth} --yuval_change {task}_{i} --tryout True --epoch 999 --threshold {total_time}".split())
-            write_log(f"")
+        for num_smpls in [10, 25, 3]:
+            for data_name in k_var_dict.keys():
+                write_log(f"    Starting data_name {data_name}")
+                set_backtrack_to(data_name_to_is_backtrack[data_name])
+                num_schemes, depth, total_time = data_name_to_num_schemes[data_name], data_name_to_depth[data_name], data_name_to_total_time[data_name]
+                for i in k_var_dict[data_name]:
+                    subprocess.run(f"python forward_eval_each_epoch.py --data_name {data_name} --depth {depth} --yuval_change {task}{num_smpls}_{i} --tryout True --epoch 999 --threshold {total_time}".split())
     exit()
     # # run yan81 mul sampling tryout
     # write_log(f"Starting task low_loss_yan81")

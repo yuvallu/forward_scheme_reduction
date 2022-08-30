@@ -209,4 +209,106 @@ Starting task - dynamic - online scheme reduction
     Starting data_name mutagenesis
         (66, 2) Starting task - dynamic - online scheme reduction
     Starting data_name mutagenesis
-        (66, 2) 
+        (66, 2) Starting task - dynamic - online scheme reduction
+    Starting data_name mutagenesis
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name world_B
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name hepatitis
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name genes
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name mondial_original_target
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name mondial_target_infant_mortality_g40
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name mondial_target_continent
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name mondial_target_GDP_g8e3
+        (66, 2)         (85, 4)         (95, 7) 
+    Starting data_name mondial_target_Inflation_g6
+        (66, 2)         (85, 4)         (95, 7) 
+Starting task rev_min_mutual_information
+    Starting data_name mondial_target_Inflation_g6
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56         60 
+    Starting data_name mondial_target_GDP_g8e3
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56         60 
+    Starting data_name mondial_target_continent
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56         60 
+    Starting data_name mondial_target_infant_mortality_g40
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56         60 
+    Starting data_name mondial_original_target
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56         60 
+    Starting data_name genes
+        4         8         12         16         20         24         28 
+    Starting data_name hepatitis
+        4         8         12         16         20 
+    Starting data_name world_B
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56 
+    Starting data_name mutagenesis
+        4         8         12         16         20         24         28         32         36         40         44         48         52         56 
+Starting task low_loss_yan81
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+Starting task remove_longest_schemes
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+Starting task lowest_loss_after_1_epoch
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+Starting task sorted_by_shuffle42
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+Starting task distribution_var
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+Starting task distribution_v
+    Starting data_name mutagenesis
+Starting task distribution_v
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes
+    Starting data_name mondial_target_infant_mortality_g40
+    Starting data_name mondial_target_continent
+    Starting data_name mondial_target_GDP_g8e3
+    Starting data_name mondial_target_Inflation_g6
+    Starting data_name mondial_original_target
+    Starting data_name world_B
+    Starting data_name mutagenesis
+    Starting data_name hepatitis
+    Starting data_name genes

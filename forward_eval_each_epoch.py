@@ -667,7 +667,19 @@ def get_samples(db, depth, num_samples, sample_fct, yuval_change='', row_idx=Non
         #print(f"$2 {time.time()}")
         schemes_to_remove = int(yuval_change.split('distribution_var_')[-1])
         # ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
-        schema_ek_var, time_to_ignore = get_schema_variance(db, args.depth, args.num_samples, row_idx)
+        schema_ek_var, time_to_ignore = get_schema_variance(db, args.depth, int(args.num_samples/10), row_idx)
+        ordered_schemes = {k: v for k, v in sorted(schema_ek_var.items(), key=lambda item: item[1])}
+        #print(f"$ordered schemes: {ordered_schemes}")
+        if 'rev_' in yuval_change:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][::-1][schemes_to_remove:]
+        else:
+            subset_full_schemes = [scheme for scheme, v in ordered_schemes.items()][schemes_to_remove:]
+    elif 'distribution_v' in yuval_change:
+        #print(f"$2 {time.time()}")
+        kvar_num_samples = int(yuval_change.split('distribution_v')[-1].split('_')[0])
+        schemes_to_remove = int(yuval_change.split('_')[-1])
+        # ordered_schemes = entropy.sorted_dict_by_max_value_in_list(entropy.get_schemes_to_entropies_dict(db, subset_full_schemes, entropy.XIY_conditional_entropy))
+        schema_ek_var, time_to_ignore = get_schema_variance(db, args.depth, kvar_num_samples, row_idx)
         ordered_schemes = {k: v for k, v in sorted(schema_ek_var.items(), key=lambda item: item[1])}
         #print(f"$ordered schemes: {ordered_schemes}")
         if 'rev_' in yuval_change:

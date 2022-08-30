@@ -74,7 +74,8 @@ def get_schema_variance(db, depth, num_samples, row_idx):
     # print(device.type)
     # print(f"$3 {time.time()}")
     time_to_ignore = time.time()
-    samples = get_samples(db, depth, int(num_samples/10), ek_utlis.ek_sample_fct)
+    # samples = get_samples(db, depth, int(num_samples/10), ek_utlis.ek_sample_fct)
+    samples = get_samples(db, depth, num_samples, ek_utlis.ek_sample_fct)
     time_to_ignore = time.time() - time_to_ignore
     # print(f"$4 {time.time()}")
     schema_idx = {s: i for i, s in enumerate(samples.keys())}
