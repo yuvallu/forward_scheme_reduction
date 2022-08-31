@@ -13,11 +13,14 @@ from db_utils import Database
 from forward import Forward, train, preproc_data, kernels
 import mmd_utils
 import ek_utlis
+import yaml
+from yaml.loader import SafeLoader
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def get_samples(db, num_samples, partition, tuples_left=None, tuples_right=None):
+def get_samples(db, num_samples, partition, tuples_left=None, tuples_right=None, allowed_schemes=None):
     tuples = [r for _, r, _ in db.iter_rows(db.predict_rel, partition)]
     scheme_tuple_map = db.scheme_tuple_map(db.predict_rel, tuples, args.depth, partition=partition)
 
@@ -26,6 +29,11 @@ def get_samples(db, num_samples, partition, tuples_left=None, tuples_right=None)
         cur_rel = scheme.split(">")[-1]
         if len(db.rel_comp_cols[cur_rel]) > 0:
             for col_id in db.rel_comp_cols[cur_rel]:
+                if allowed_schemes is not None:
+                    full_scheme = f"{scheme}>{col_id}"
+                    if full_scheme not in allowed_schemes:
+                        continue
+
                 col_kernel = kernels[db.get_col_type(col_id)]
                 pairs, values = sample_fct(db, col_id, tuple_map, num_samples, col_kernel, tuples_left=tuples_left, tuples_right=tuples_right)
 
@@ -36,8 +44,8 @@ def get_samples(db, num_samples, partition, tuples_left=None, tuples_right=None)
     return samples
 
 
-def compute_initial_embedding(db, dim, batch_size, epochs):
-    samples = get_samples(db, args.num_samples, partition=0)
+def compute_initial_embedding(db, dim, batch_size, epochs, allowed_schemes=None):
+    samples = get_samples(db, args.num_samples, partition=0, allowed_schemes=allowed_schemes)
 
     row_idx = {r: i for i, (_, r, _) in enumerate(db.iter_rows(db.predict_rel, partition=0))}
     scheme_idx = {s: i for i, s in enumerate(samples.keys())}
@@ -51,15 +59,15 @@ def compute_initial_embedding(db, dim, batch_size, epochs):
     return embedding, model
 
 
-def infer(model, db, old_rows, new_rows):
+def infer(model, db, old_rows, new_rows, allowed_schemes=None):
     model.to(device)
 
     print("sampling for inductive embeddings...")
-    samples = get_samples(db, args.num_samples_inductive, 1, new_rows, old_rows)
+    samples = get_samples(db, args.num_samples_inductive, 1, new_rows, old_rows, allowed_schemes=allowed_schemes)
 
     # stack pairs of tuples and map them to integer indices
     pairs = np.vstack([p for p, _ in samples.values()])
-    idx_old = torch.tensor(model.row_idx(pairs[:,1]))
+    idx_old = torch.tensor(model.row_idx(pairs[:, 1]))
 
     # stack kernel values
     vals = torch.tensor(np.concatenate([v for _, v in samples.values()], axis=0))
@@ -86,10 +94,11 @@ if __name__ == '__main__':
     parser.add_argument("--num_samples", type=int, default=5000, help="Number of samples per start tuple and metapath")
     parser.add_argument("--num_samples_inductive", type=int, default=2000, help="Number of samples per start tuple and metapath used for the inductive step")
     parser.add_argument("--batch_size", type=int, default=50000, help="Batch size during training")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of epochs during training")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of epochs during training")
     parser.add_argument("--train_ratio", type=float, default=0.9, help="Ration of train data")
     parser.add_argument("--reps", type=int, default=5, help="Test repetitions")
     parser.add_argument("--classifier", type=str, default='SVM', choices={'NN', 'SVM'}, help="Downstream Classifier")
+    parser.add_argument("--allowed_scheme_list", type=str, default=None, help="Allowed Schemes")
     parser.add_argument("--seed", type=int, default=0, help="Random Seed")
     args = parser.parse_args()
     np.random.seed(args.seed)
@@ -105,6 +114,15 @@ if __name__ == '__main__':
 
     Y, rows = db.get_labels()
 
+    if args.allowed_scheme_list is not None:
+        with open(args.allowed_scheme_list, 'r') as f:
+            yaml_dict = yaml.load(f, Loader=SafeLoader)
+            num_list = len(yaml_dict)
+            num_allowed = int(np.ceil(0.4 * num_list))
+            allowed_schemes = {yaml_dict[str(i)] for i in range(num_list-num_allowed, num_list)}
+    else:
+        allowed_schemes = None
+
     scores = []
     split = StratifiedShuffleSplit(train_size=args.train_ratio, random_state=0, n_splits=10)
     for i, (train_index, test_index) in enumerate(split.split(rows, Y)):
@@ -113,8 +131,8 @@ if __name__ == '__main__':
         partition = {**{t: 0 for t in train_rows}, **{t: 1 for t in test_rows}}
         db.partition(partition=partition)
 
-        train_embedding, model = compute_initial_embedding(db, args.dim, args.batch_size, args.epochs)
-        test_embedding = infer(model, db, train_rows, test_rows)
+        train_embedding, model = compute_initial_embedding(db, args.dim, args.batch_size, args.epochs, allowed_schemes=allowed_schemes)
+        test_embedding = infer(model, db, train_rows, test_rows, allowed_schemes=allowed_schemes)
 
         X_train = np.float32([train_embedding[row] for row in train_rows])
         X_test = np.float32([test_embedding[row] for row in test_rows])
