@@ -25,7 +25,7 @@ def get_samples(db, num_samples, partition, tuples_left=None, tuples_right=None,
     scheme_tuple_map = db.scheme_tuple_map(db.predict_rel, tuples, args.depth, partition=partition)
 
     samples = {}
-    for scheme, tuple_map in tqdm(scheme_tuple_map.items()):
+    for scheme, tuple_map in tqdm(scheme_tuple_map.items(), disable=True):
         cur_rel = scheme.split(">")[-1]
         if len(db.rel_comp_cols[cur_rel]) > 0:
             for col_id in db.rel_comp_cols[cur_rel]:
@@ -52,7 +52,7 @@ def compute_initial_embedding(db, dim, batch_size, epochs, allowed_schemes=None)
     model = Forward(dim, len(samples), row_idx, scheme_idx)
 
     loader = preproc_data(samples, model, batch_size)
-    train(model, loader, epochs)
+    train(model, loader, epochs, no_bar=True)
 
     embedding = model.get_embedding()
     embedding = {r: embedding[i] for r, i in row_idx.items()}
@@ -78,7 +78,7 @@ def infer(model, db, old_rows, new_rows, allowed_schemes=None):
 
     print("computing new embeddings...")
     new_embedding = {}
-    for r in tqdm(new_rows):
+    for r in tqdm(new_rows, disable=True):
         idx = np.where(pairs[:, 0] == r)[0]
         x = model.infer(idx_old[idx], scheme[idx], vals[idx])
         new_embedding[r] = x
