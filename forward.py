@@ -83,13 +83,13 @@ class Forward(torch.nn.Module):
         return x.cpu().detach().numpy()
 
 
-def train(model, loader, epochs):
+def train(model, loader, epochs, no_bar=False):
     model.to(device)
     model.train()
     opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for e in range(epochs):
-        bar = tqdm(desc=f'Epoch {e + 1} Mean Loss: _')
+        bar = tqdm(desc=f'Epoch {e + 1} Mean Loss: _', disable=no_bar)
         bar.reset(total=len(loader))
 
         epoch_losses = []
