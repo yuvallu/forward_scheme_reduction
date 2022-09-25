@@ -1,0 +1,23 @@
+{
+    "0": "m_id@dispat-m_id@rel13>a_id@rel13-a_id@inf>inf>dur@inf",
+    "1": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>ztt@indis",
+    "2": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>tbil@indis",
+    "3": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>ttt@indis",
+    "4": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>tp@indis",
+    "5": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>got@indis",
+    "6": "m_id@dispat-m_id@rel11>b_id@rel11-b_id@bio>bio>fibros@bio",
+    "7": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>tcho@indis",
+    "8": "m_id@dispat-m_id@rel11>b_id@rel11-b_id@bio>bio>activity@bio",
+    "9": "dispat>age@dispat",
+    "10": "m_id@dispat-m_id@rel12>m_id@rel12-m_id@dispat>dispat>age@dispat",
+    "11": "m_id@dispat-m_id@rel11>m_id@rel11-m_id@dispat>dispat>age@dispat",
+    "12": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>gpt@indis",
+    "13": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>alb@indis",
+    "14": "m_id@dispat-m_id@rel13>m_id@rel13-m_id@dispat>dispat>age@dispat",
+    "15": "dispat>sex@dispat",
+    "16": "m_id@dispat-m_id@rel11>m_id@rel11-m_id@dispat>dispat>sex@dispat",
+    "17": "m_id@dispat-m_id@rel12>m_id@rel12-m_id@dispat>dispat>sex@dispat",
+    "18": "m_id@dispat-m_id@rel13>m_id@rel13-m_id@dispat>dispat>sex@dispat",
+    "19": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>dbil@indis",
+    "20": "m_id@dispat-m_id@rel12>in_id@rel12-in_id@indis>indis>che@indis"
+}
